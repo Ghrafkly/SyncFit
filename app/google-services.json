@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "922709979614",
+    "project_id": "syncfit-25a66",
+    "storage_bucket": "syncfit-25a66.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:922709979614:android:3bb544f666ccb4af50ad4f",
+        "android_client_info": {
+          "package_name": "com.example.syncfit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "922709979614-o2o4r9ktesdapoagtjtn2l49krrnqrs2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIb4lj8exw60H4xjdT_LEZHektL4Z3lOU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "922709979614-o2o4r9ktesdapoagtjtn2l49krrnqrs2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
