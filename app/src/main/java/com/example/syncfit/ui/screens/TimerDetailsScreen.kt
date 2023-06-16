@@ -43,7 +43,6 @@ import com.example.syncfit.ui.theme.Dimensions
 @Composable
 fun TimerDetailsScreen(
     state : AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController
 ) {

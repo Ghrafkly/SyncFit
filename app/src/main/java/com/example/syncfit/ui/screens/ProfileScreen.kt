@@ -30,7 +30,6 @@ import kotlinx.coroutines.Job
 @Composable
 fun ProfileScreen(
     state : AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
     clickGoogleSignOut: () -> Job,

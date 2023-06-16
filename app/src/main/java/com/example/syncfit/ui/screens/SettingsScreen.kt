@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
@@ -32,7 +33,6 @@ import com.example.syncfit.ui.theme.Dimensions
 @Composable
 fun SettingsScreen(
     state : AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
 ) {
@@ -60,7 +60,6 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
                 DeleteActions(
                     state = state,
-                    viewModel = viewModel,
                     onEvent = onEvent,
                     navController = navController
                 )

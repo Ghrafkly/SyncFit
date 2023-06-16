@@ -44,7 +44,6 @@ import com.example.syncfit.ui.theme.Dimensions
 fun TimersViewScreen(
     modifier: Modifier = Modifier,
     state: AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
 ) {

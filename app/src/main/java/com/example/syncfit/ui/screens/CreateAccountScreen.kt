@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.screens.CreateAccountFlavourText
@@ -33,7 +34,6 @@ import com.example.syncfit.ui.theme.Dimensions
 @Composable
 fun CreateAccountScreen(
     state: AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
     clickGoogleLogIn: () -> Unit,
@@ -69,7 +69,6 @@ fun CreateAccountScreen(
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
                 CreateAccountTextFields(
                     state = state,
-                    viewModel = viewModel,
                     onEvent = onEvent,
                     navController = navController,
                     clickGoogleLogIn = clickGoogleLogIn,

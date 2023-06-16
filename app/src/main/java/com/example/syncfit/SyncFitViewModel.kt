@@ -5,12 +5,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.syncfit.authentication.GoogleAuthClient
 import com.example.syncfit.database.daos.TimerDao
 import com.example.syncfit.database.daos.UserDao
 import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.entities.User
+import com.example.syncfit.database.entities.UserWithTimers
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.events.ClickEvents
@@ -22,33 +24,25 @@ import com.example.syncfit.states.UserState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.math.sign
 
 class SyncFitViewModel(
     private val userDao: UserDao,
     private val timerDao: TimerDao,
-    private val googleAuthClient: GoogleAuthClient
+    private val googleAuthClient: GoogleAuthClient,
+    private val savedStateHandle: SavedStateHandle,
 ): ViewModel() {
     private val _userState = MutableStateFlow(UserState())
     private val _timerState = MutableStateFlow(TimerState())
     private val _state = MutableStateFlow(AppState())
-
-    val getUserState: Flow<UserState> = _userState.asStateFlow()
-    val getTimerState: Flow<TimerState> = _timerState.asStateFlow()
-
-    fun setUserState(userState: UserState) {
-        _userState.value = userState
-    }
-
-    fun setTimerState(timerState: TimerState) {
-        _timerState.value = timerState
-    }
 
     val state = combine(_state, _userState, _timerState,) { state, userState, timerState ->
         state.copy(
@@ -121,6 +115,7 @@ class SyncFitViewModel(
                     logIn(dbUser)
                 }
             }
+            Log.i("SyncFitViewModel", "Validation ${state.value.userState}")
         }
     }
 
@@ -149,7 +144,7 @@ class SyncFitViewModel(
             is AuthEvents.LocalSignIn -> userValidation(event.email, event.password)
             is AuthEvents.CreateAccount -> createAccount(event.user)
             is AuthEvents.LogOut -> signOut()
-            AuthEvents.ResetSignIn -> resetUserState()
+            AuthEvents.ResetSignIn -> println("activated")
         }
     }
 

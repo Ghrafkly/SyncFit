@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
@@ -75,7 +76,6 @@ fun SignInFlavourText(
 @Composable
 fun SignInTextFields(
     state: AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
     clickGoogleLogIn: () -> Unit,
@@ -172,7 +172,9 @@ fun SignInTextFields(
         ) {
             Button(
                 modifier = Modifier.width(Dimensions.ButtonWidth.large),
-                onClick = { onEvent(AuthEvents.LocalSignIn(email, password)) },
+                onClick = {
+                    onEvent(AuthEvents.LocalSignIn(email, password))
+                },
                 content = { Text("Sign In") },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

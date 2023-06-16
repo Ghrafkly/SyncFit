@@ -84,7 +84,6 @@ fun CreateAccountFlavourText(
 @Composable
 fun CreateAccountTextFields(
     state: AppState,
-    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
     clickGoogleLogIn: () -> Unit,

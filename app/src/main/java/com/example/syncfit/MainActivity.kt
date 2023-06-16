@@ -10,14 +10,18 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -67,11 +71,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+
     private val viewModel by viewModels<SyncFitViewModel> (
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SyncFitViewModel(db.userDao, db.timerDao, googleAuthClient) as T
+                    return SyncFitViewModel(db.userDao, db.timerDao, googleAuthClient, SavedStateHandle()) as T
                 }
             }
         }
@@ -161,7 +166,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.SignIn.SIGN_IN) {
                             SignInScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                                 clickGoogleLogIn = { clickGoogleLogIn() }
@@ -170,7 +174,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.SignIn.JOIN) {
                             CreateAccountScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                                 clickGoogleLogIn = { clickGoogleLogIn() }
@@ -184,7 +187,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Timers.HOME) {
                             TimersViewScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -192,7 +194,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Timers.CREATE) {
                             TimerCreateScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -200,7 +201,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Timers.DETAILS) {
                             TimerDetailsScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -208,7 +208,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Timers.RUN) {
                             TimerRunScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -216,7 +215,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Profile.HOME) {
                             ProfileScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                                 clickGoogleSignOut = { clickGoogleSignOut() }
@@ -225,7 +223,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Profile.EDIT) {
                             ProfileDetailsScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -233,7 +230,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.SETTINGS) {
                             SettingsScreen(
                                 state = state,
-                                viewModel = viewModel,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
@@ -243,15 +239,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(
-    navController: NavHostController,
-): T {
-    val navGraphRoute = destination.parent?.route ?: return viewModel()
-    val parentEntry = remember(this) {
-        navController.getBackStackEntry(navGraphRoute)
-    }
-    return viewModel(parentEntry)
 }
