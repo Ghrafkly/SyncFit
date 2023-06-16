@@ -24,24 +24,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.composables.screens.LogInMaster
+import com.example.syncfit.composables.screens.ProfileDetailsFields
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileDetailsScreen(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    navController: NavController
+    navController: NavController,
 ) {
     val focusManager = LocalFocusManager.current
-    val fields = LogInMaster(
-        type = "profile_details",
-        onEvent = onEvent,
-    )
 
     Scaffold(
         modifier = Modifier
@@ -63,11 +64,9 @@ fun ProfileDetailsScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
-                fields.textFields()
-                CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.large))
-                ProfileDetailsActions(
-                    onEvent = onEvent,
-                    navController = navController
+                ProfileDetailsFields(
+                    state = state,
+                    onEvent = onEvent
                 )
             }
         },

@@ -18,8 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.TimerEvents
+import com.example.syncfit.events.UserEvents
+import com.example.syncfit.states.AppState
+import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
 
 @Composable
@@ -41,9 +46,10 @@ fun SettingsActions() {
 
 @Composable
 fun DeleteActions(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    onDeleteAccountNavigateTo: () -> Unit,
-    clickDeleteAccount: () -> Unit
+    navController: NavController,
 ) {
     Button(
         onClick = { /*onEvent(TimerEvents.DeleteTimers)*/ },
@@ -59,8 +65,8 @@ fun DeleteActions(
     Spacer(modifier = Modifier.height(Dimensions.Spacing.medium))
     Button(
         onClick = {
-            clickDeleteAccount()
-            onDeleteAccountNavigateTo()
+            onEvent(UserEvents.DeleteUser)
+            navController.navigate(ScreenConstants.Route.START)
         },
         modifier = Modifier.width(Dimensions.ButtonWidth.medium),
         colors = ButtonDefaults.buttonColors(

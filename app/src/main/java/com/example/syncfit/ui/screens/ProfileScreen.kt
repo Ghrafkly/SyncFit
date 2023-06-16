@@ -16,21 +16,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.composables.screens.ProfileActions
 import com.example.syncfit.composables.screens.ProfileImage
 import com.example.syncfit.composables.screens.WelcomeMessage
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.states.AppState
 import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileScreen(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
-    onEditNavigateTo: () -> Unit,
-    onLogOutNavigateTo: () -> Unit,
     clickGoogleSignOut: () -> Job,
 ) {
     Scaffold(modifier = Modifier
@@ -54,8 +56,7 @@ fun ProfileScreen(
                 WelcomeMessage(user = "USER")
                 ProfileActions(
                     onEvent = onEvent,
-                    onEditNavigateTo = { onEditNavigateTo() },
-                    onLogOutNavigateTo = { onLogOutNavigateTo() },
+                    navController = navController,
                     clickGoogleSignOut = clickGoogleSignOut
                 )
             }

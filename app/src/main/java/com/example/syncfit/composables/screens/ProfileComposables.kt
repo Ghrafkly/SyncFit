@@ -30,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -68,8 +70,7 @@ fun ProfileImage() {
 fun ProfileActions(
     modifier: Modifier = Modifier,
     onEvent: (AppEvents) -> Unit,
-    onEditNavigateTo: () -> Unit,
-    onLogOutNavigateTo: () -> Unit,
+    navController: NavController,
     clickGoogleSignOut: () -> Job,
 ) {
     val sheetState = rememberModalBottomSheetState(
@@ -105,7 +106,7 @@ fun ProfileActions(
             }
         )
         Card(
-            onClick = { onEditNavigateTo() },
+            onClick = { navController.navigate(ScreenConstants.Route.Profile.EDIT) },
             content = {
                 Row(
                     modifier = Modifier
@@ -128,7 +129,11 @@ fun ProfileActions(
         Button(
             onClick = {
                 clickGoogleSignOut()
-                onLogOutNavigateTo()
+                navController.navigate(ScreenConstants.Route.START) {
+                    popUpTo("open") {
+                        inclusive = true
+                    }
+                }
             },
             modifier = Modifier
                 .width(Dimensions.ButtonWidth.large),

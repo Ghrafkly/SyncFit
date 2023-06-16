@@ -18,21 +18,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.composables.screens.DeleteActions
 import com.example.syncfit.composables.screens.SettingsActions
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    onDeleteAccountNavigateTo: () -> Unit,
     navController: NavController,
-    clickDeleteAccount: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier
@@ -57,9 +59,10 @@ fun SettingsScreen(
                 CustomDivider()
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
                 DeleteActions(
+                    state = state,
+                    viewModel = viewModel,
                     onEvent = onEvent,
-                    onDeleteAccountNavigateTo = onDeleteAccountNavigateTo,
-                    clickDeleteAccount = clickDeleteAccount
+                    navController = navController
                 )
             }
         },

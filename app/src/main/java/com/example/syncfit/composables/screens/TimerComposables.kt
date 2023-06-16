@@ -1,6 +1,7 @@
 package com.example.syncfit.composables.screens
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +17,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoNotDisturbOn
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Divider
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,12 +42,54 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.CustomNoPaddingTextField
 import com.example.syncfit.composables.custom.CustomOutlinedTextField
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
+
+@Composable
+fun TimerCard(
+    modifier: Modifier = Modifier,
+    onEvent: (AppEvents) -> Unit,
+    navController: NavController,
+) {
+    var favourite by remember { mutableStateOf(false) }
+
+    ListItem(
+        modifier = Modifier.clickable { navController.navigate(ScreenConstants.Route.Timers.DETAILS) },
+        headlineContent = { Text("Leg Squats") },
+        supportingContent = {
+            Text("1m45s - 3 sets - 10 reps")
+        },
+        leadingContent = {
+            IconButton(onClick = { favourite = !favourite }) {
+                Icon(
+                    imageVector = when (favourite) {
+                        true -> Icons.Filled.Favorite
+                        false -> Icons.Outlined.FavoriteBorder
+                    },
+                    contentDescription = "Favourite",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        trailingContent = {
+            IconButton(onClick = { navController.navigate(ScreenConstants.Route.Timers.RUN) }) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = "Start",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        },
+    )
+    Divider()
+}
 
 @Composable
 fun TimersViewActions(

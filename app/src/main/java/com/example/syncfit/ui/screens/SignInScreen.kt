@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.screens.SignInFlavourText
 import com.example.syncfit.composables.screens.SignInTextFields
 import com.example.syncfit.composables.screens.SignInTopAppBar
@@ -29,11 +31,9 @@ import com.example.syncfit.ui.theme.Dimensions
 @Composable
 fun SignInScreen(
     state: AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    onBackNavigateTo: () -> Unit,
-    onLinkNavigateTo: () -> Unit,
-    onLogInNavigateTo: () -> Unit,
-    onGoogleLogInNavigateTo: () -> Unit,
+    navController: NavController,
     clickGoogleLogIn: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -47,7 +47,12 @@ fun SignInScreen(
                 onClick = { focusManager.clearFocus() },
                 indication = null
             ),
-        topBar = { SignInTopAppBar(onBackNavigateTo = { onBackNavigateTo() }) },
+        topBar = { SignInTopAppBar(onBackNavigateTo = {
+            navController.navigate(ScreenConstants.Route.START) {
+                popUpTo("open") { saveState = true }
+                launchSingleTop = true
+            }
+        }) },
         content = { innerPadding ->
             Column(
                 modifier = Modifier
@@ -58,13 +63,13 @@ fun SignInScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
-                SignInFlavourText(onLinkNavigateTo = { onLinkNavigateTo() })
+                SignInFlavourText(onLinkNavigateTo = { navController.navigate(ScreenConstants.Route.SignIn.JOIN) })
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
                 SignInTextFields(
                     state = state,
+                    viewModel = viewModel,
                     onEvent = onEvent,
-                    onLogInNavigateTo = { onLogInNavigateTo() },
-                    onGoogleLogInNavigateTo = { onGoogleLogInNavigateTo() },
+                    navController = navController,
                     clickGoogleLogIn = clickGoogleLogIn,
                 )
             }

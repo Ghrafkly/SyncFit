@@ -16,15 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.ClickEvents
+import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions.*
 
 @Composable
 fun StartActions(
     modifier: Modifier = Modifier,
-    onJoinNavigateTo: () -> Unit,
-    onSignInNavigateTo: () -> Unit,
+    navController: NavController,
 ) {
     val buttonModifier = Modifier
         .width(ButtonWidth.large)
@@ -40,14 +41,14 @@ fun StartActions(
     ) {
         Button(
             modifier = buttonModifier,
-            onClick = onJoinNavigateTo,
+            onClick = { navController.navigate(ScreenConstants.Route.SignIn.JOIN) },
         ) {
             Text("Join Now", fontSize = MaterialTheme.typography.titleMedium.fontSize)
         }
         Spacer(modifier = Modifier.padding(Spacing.medium))
         FilledTonalButton(
             modifier = buttonModifier,
-            onClick = onSignInNavigateTo,
+            onClick = { navController.navigate(ScreenConstants.Route.SignIn.SIGN_IN) },
         ) {
             Text("Sign In", fontSize = MaterialTheme.typography.titleMedium.fontSize)
         }

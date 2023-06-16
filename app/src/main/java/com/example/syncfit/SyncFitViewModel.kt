@@ -3,6 +3,7 @@ package com.example.syncfit
 import android.util.Log
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.syncfit.authentication.GoogleAuthClient
@@ -21,6 +22,7 @@ import com.example.syncfit.states.UserState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -36,6 +38,17 @@ class SyncFitViewModel(
     private val _userState = MutableStateFlow(UserState())
     private val _timerState = MutableStateFlow(TimerState())
     private val _state = MutableStateFlow(AppState())
+
+    val getUserState: Flow<UserState> = _userState.asStateFlow()
+    val getTimerState: Flow<TimerState> = _timerState.asStateFlow()
+
+    fun setUserState(userState: UserState) {
+        _userState.value = userState
+    }
+
+    fun setTimerState(timerState: TimerState) {
+        _timerState.value = timerState
+    }
 
     val state = combine(_state, _userState, _timerState,) { state, userState, timerState ->
         state.copy(
@@ -86,6 +99,7 @@ class SyncFitViewModel(
     private fun userValidation(email: String, password: String) {
         viewModelScope.launch {
             val dbUser: User? = userDao.getUserByKey(email)
+            Log.i("SyncFitViewModel", "dbUser: $dbUser")
             if (dbUser == null) {
                 _userState.update {
                     it.copy(

@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.syncfit.ui.screens.ScreenConstants
 
 sealed class NavItem {
     open val label: String = "Error"
@@ -40,28 +41,28 @@ sealed class NavItem {
         override val label: String = "Timers"
         override val icon: @Composable () -> Unit = { Icon(imageVector = Icons.Outlined.ViewAgenda, contentDescription = "Timers") }
         override val selectedIcon: @Composable () -> Unit = { Icon(imageVector = Icons.Filled.ViewAgenda, contentDescription = "Timers") }
-        override val route: String = "timers_view"
+        override val route: String = ScreenConstants.Route.Timers.HOME
     }
 
     object Create : NavItem() {
         override val label: String = "Add Timer"
         override val icon: @Composable () -> Unit = { Icon(imageVector = Icons.Outlined.AddCircleOutline, contentDescription = "Create Timer") }
         override val selectedIcon: @Composable () -> Unit = { Icon(imageVector = Icons.Filled.AddCircle, contentDescription = "Create Timer") }
-        override val route = "timer_create"
+        override val route = ScreenConstants.Route.Timers.CREATE
     }
 
     object Profile : NavItem() {
         override val label: String = "Profile"
         override val icon: @Composable () -> Unit = { Icon(imageVector = Icons.Outlined.AccountCircle, contentDescription = "Profile") }
         override val selectedIcon: @Composable () -> Unit = { Icon(imageVector = Icons.Filled.AccountCircle, contentDescription = "Profile") }
-        override val route = "profile_view"
+        override val route = ScreenConstants.Route.Profile.HOME
     }
 
     object Settings : NavItem() {
         override val label: String = "Settings"
         override val icon: @Composable () -> Unit = { Icon(imageVector = Icons.Outlined.Settings, contentDescription = "Settings") }
         override val selectedIcon: @Composable () -> Unit = { Icon(imageVector = Icons.Filled.Settings, contentDescription = "Settings") }
-        override val route = "settings_view"
+        override val route = ScreenConstants.Route.SETTINGS
     }
 }
 

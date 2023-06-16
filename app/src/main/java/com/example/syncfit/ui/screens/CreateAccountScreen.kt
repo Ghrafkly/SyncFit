@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.screens.CreateAccountFlavourText
 import com.example.syncfit.composables.screens.CreateAccountTextFields
 import com.example.syncfit.composables.screens.CreateAccountTopAppBar
@@ -31,11 +33,9 @@ import com.example.syncfit.ui.theme.Dimensions
 @Composable
 fun CreateAccountScreen(
     state: AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    onBackNavigateTo: () -> Unit,
-    onLinkNavigateTo: () -> Unit,
-    onLogInNavigateTo: () -> Unit,
-    onGoogleLogInNavigateTo: () -> Unit,
+    navController: NavController,
     clickGoogleLogIn: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -49,7 +49,12 @@ fun CreateAccountScreen(
                 onClick = { focusManager.clearFocus() },
                 indication = null
             ),
-        topBar = { CreateAccountTopAppBar(onBackNavigateTo = { onBackNavigateTo() }) },
+        topBar = { CreateAccountTopAppBar(onBackNavigateTo = {
+            navController.navigate(ScreenConstants.Route.START) {
+                popUpTo("open") { saveState = true }
+                launchSingleTop = true
+            }
+        }) },
         content = { innerPadding ->
             Column(
                 modifier = Modifier
@@ -60,13 +65,13 @@ fun CreateAccountScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
-                CreateAccountFlavourText(onLinkNavigateTo = { onLinkNavigateTo() })
+                CreateAccountFlavourText(onLinkNavigateTo = { navController.navigate(ScreenConstants.Route.SignIn.SIGN_IN) })
                 Spacer(modifier = Modifier.height(Dimensions.Spacing.large))
                 CreateAccountTextFields(
                     state = state,
+                    viewModel = viewModel,
                     onEvent = onEvent,
-                    onLogInNavigateTo = { onLogInNavigateTo() },
-                    onGoogleLogInNavigateTo = { onGoogleLogInNavigateTo() },
+                    navController = navController,
                     clickGoogleLogIn = clickGoogleLogIn,
                 )
             }

@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.LogoWithText
 import com.example.syncfit.composables.screens.StartActions
 import com.example.syncfit.events.AppEvents
@@ -22,8 +23,7 @@ import com.example.syncfit.events.AppEvents
 fun StartScreen(
     modifier: Modifier = Modifier,
     onEvent: (AppEvents) -> Unit,
-    onJoinNavigateTo: () -> Unit,
-    onSignInNavigateTo: () -> Unit,
+    navController: NavController,
 ) {
     Scaffold(
         modifier = modifier
@@ -39,10 +39,7 @@ fun StartScreen(
             verticalArrangement = Arrangement.SpaceAround
         ) {
             LogoWithText()
-            StartActions(
-                onJoinNavigateTo = onJoinNavigateTo,
-                onSignInNavigateTo = onSignInNavigateTo,
-            )
+            StartActions(navController = navController)
         }
     }
 }

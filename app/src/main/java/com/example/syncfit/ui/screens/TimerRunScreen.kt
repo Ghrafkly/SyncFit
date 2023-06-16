@@ -21,16 +21,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.database.models.TimerState
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimerRunScreen(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
     navController: NavController
 ) {

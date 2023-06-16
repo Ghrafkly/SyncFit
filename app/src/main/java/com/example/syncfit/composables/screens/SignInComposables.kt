@@ -32,6 +32,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomGoogleButton
 import com.example.syncfit.composables.custom.CustomOutlinedTextField
@@ -39,6 +41,7 @@ import com.example.syncfit.composables.custom.CustomTopAppBar
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.states.AppState
+import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
 
 @Composable
@@ -72,9 +75,9 @@ fun SignInFlavourText(
 @Composable
 fun SignInTextFields(
     state: AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    onLogInNavigateTo: () -> Unit,
-    onGoogleLogInNavigateTo: () -> Unit,
+    navController: NavController,
     clickGoogleLogIn: () -> Unit,
 ) {
     onEvent(AuthEvents.ResetSignIn)
@@ -88,6 +91,10 @@ fun SignInTextFields(
         if (!state.userState.signInError.isNullOrBlank()) {
             invalidUser = true
         }
+    }
+
+    LaunchedEffect(key1 = state.userState.isSignInSuccessful) {
+        if (state.userState.isSignInSuccessful) { navController.navigate(ScreenConstants.Route.Timers.HOME) }
     }
 
     Column(

@@ -9,15 +9,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,7 +34,17 @@ import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.events.UserEvents
 import com.example.syncfit.states.AppState
-import com.example.syncfit.ui.screens.ScreenNav
+import com.example.syncfit.ui.screens.CreateAccountScreen
+import com.example.syncfit.ui.screens.ProfileDetailsScreen
+import com.example.syncfit.ui.screens.ProfileScreen
+import com.example.syncfit.ui.screens.ScreenConstants
+import com.example.syncfit.ui.screens.SettingsScreen
+import com.example.syncfit.ui.screens.SignInScreen
+import com.example.syncfit.ui.screens.StartScreen
+import com.example.syncfit.ui.screens.TimerCreateScreen
+import com.example.syncfit.ui.screens.TimerDetailsScreen
+import com.example.syncfit.ui.screens.TimerRunScreen
+import com.example.syncfit.ui.screens.TimersViewScreen
 import com.example.syncfit.ui.theme.SyncFitTheme
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.Job
@@ -94,14 +109,14 @@ class MainActivity : ComponentActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
 
-                        navController.navigate(ScreenNav.Home.nav.route)
+                        navController.navigate(ScreenConstants.Route.Timers.HOME)
                     }
                 }
 
                 LaunchedEffect(key1 = Unit) {
                     if (googleAuthClient.getSignedInGoogleUser() != null) {
                         Log.i("MainActivity", "User already signed in")
-                        navController.navigate(ScreenNav.Home.nav.route)
+                        navController.navigate(ScreenConstants.Route.Timers.HOME)
                     }
                 }
 
@@ -133,176 +148,110 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     startDestination = "open"
                 ) {
-                    loginGraph(
-                        navController = navController,
-                        event = viewModel::onEvent,
-                        state = state,
-                        clickGoogleLogIn = clickGoogleLogIn,
-                    )
-                    mainGraph(
-                        navController = navController,
-                        onEvent = viewModel::onEvent,
-                        state = state,
-                        clickGoogleSignOut = clickGoogleSignOut
-                    )
+                    navigation(
+                        route = "open",
+                        startDestination = ScreenConstants.Route.START
+                    ) {
+                        composable(ScreenConstants.Route.START) {
+                            StartScreen(
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.SignIn.SIGN_IN) {
+                            SignInScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                                clickGoogleLogIn = { clickGoogleLogIn() }
+                            )
+                        }
+                        composable(ScreenConstants.Route.SignIn.JOIN) {
+                            CreateAccountScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                                clickGoogleLogIn = { clickGoogleLogIn() }
+                            )
+                        }
+                    }
+                    navigation(
+                        route = "main",
+                        startDestination = ScreenConstants.Route.Timers.HOME
+                    ) {
+                        composable(ScreenConstants.Route.Timers.HOME) {
+                            TimersViewScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.Timers.CREATE) {
+                            TimerCreateScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.Timers.DETAILS) {
+                            TimerDetailsScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.Timers.RUN) {
+                            TimerRunScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.Profile.HOME) {
+                            ProfileScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                                clickGoogleSignOut = { clickGoogleSignOut() }
+                            )
+                        }
+                        composable(ScreenConstants.Route.Profile.EDIT) {
+                            ProfileDetailsScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                        composable(ScreenConstants.Route.SETTINGS) {
+                            SettingsScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                onEvent = viewModel::onEvent,
+                                navController = navController,
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-fun NavGraphBuilder.loginGraph(
-    navController: NavController,
-    event: (AppEvents) -> Unit,
-    state: AppState,
-    clickGoogleLogIn: () -> Job,
-) {
-    navigation(
-        route = "open",
-        startDestination = ScreenNav.Start.nav.route
-    ) {
-        composable(ScreenNav.Start.nav.route) {
-            val onJoinNavigateTo = { navController.navigate(ScreenNav.Join.nav.route) }
-            val onSignInNavigateTo = { navController.navigate(ScreenNav.SignIn.nav.route) }
-
-            ScreenNav.Start(
-                onEvent = event,
-                onJoinNavigateTo = { onJoinNavigateTo() },
-                onSignInNavigateTo = { onSignInNavigateTo() }
-            ).Render()
-        }
-        composable(ScreenNav.SignIn.nav.route) {
-            val onBackNavigateTo = {
-                navController.navigate(ScreenNav.Start.nav.route) {
-                    popUpTo("open") {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                }
-            }
-            val onLinkNavigateTo = { navController.navigate(ScreenNav.Join.nav.route) }
-            val onLogInNavigateTo = { navController.navigate(ScreenNav.Home.nav.route) }
-            val onGoogleLogInNavigateTo = { navController.navigate(ScreenNav.Home.nav.route) }
-
-            ScreenNav.SignIn(
-                state = state,
-                onEvent = event,
-                onBackNavigateTo = { onBackNavigateTo() },
-                onLinkNavigateTo = { onLinkNavigateTo() },
-                onLogInNavigateTo = { onLogInNavigateTo() },
-                onGoogleLogInNavigateTo = { onGoogleLogInNavigateTo() },
-                clickGoogleLogIn = { clickGoogleLogIn() }
-            ).Render()
-        }
-        composable(ScreenNav.Join.nav.route) {
-            val onBackNavigateTo = {
-                navController.navigate("open") {
-                    popUpTo("open") {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                }
-            }
-            val onLinkNavigateTo = { navController.navigate(ScreenNav.SignIn.nav.route) }
-            val onLogInNavigateTo = { navController.navigate(ScreenNav.Home.nav.route) }
-            val onGoogleLogInNavigateTo = { navController.navigate(ScreenNav.Home.nav.route) }
-
-            ScreenNav.Join(
-                state = state,
-                onEvent = event,
-                onBackNavigateTo = { onBackNavigateTo() },
-                onLinkNavigateTo = { onLinkNavigateTo() },
-                onLogInNavigateTo = { onLogInNavigateTo() },
-                onGoogleLogInNavigateTo = { onGoogleLogInNavigateTo() },
-                clickGoogleLogIn = { clickGoogleLogIn() }
-            ).Render()
-        }
+@Composable
+inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(
+    navController: NavHostController,
+): T {
+    val navGraphRoute = destination.parent?.route ?: return viewModel()
+    val parentEntry = remember(this) {
+        navController.getBackStackEntry(navGraphRoute)
     }
-}
-
-fun NavGraphBuilder.mainGraph(
-    state: AppState,
-    onEvent: (AppEvents) -> Unit,
-    navController: NavController,
-    clickGoogleSignOut : () -> Job,
-) {
-    navigation(
-        route = "main",
-        startDestination = ScreenNav.Home.nav.route
-    ) {
-        composable(ScreenNav.Home.nav.route) {
-            val onCreateNavigateTo = { navController.navigate(ScreenNav.TimerCreate.nav.route) }
-            val onItemNavigateTo = { navController.navigate(ScreenNav.TimerDetails.nav.route) }
-            val onPlayNavigateTo = { navController.navigate(ScreenNav.TimerRun.nav.route) }
-
-            ScreenNav.Home(
-                event = onEvent,
-                navController = navController,
-                onCreateNavigateTo = { onCreateNavigateTo() },
-                onItemNavigateTo = { onItemNavigateTo() },
-                onPlayNavigateTo = { onPlayNavigateTo() }
-            ).Render()
-        }
-        composable(ScreenNav.TimerCreate.nav.route) {
-            ScreenNav.TimerCreate(
-                event = onEvent,
-                navController = navController,
-            ).Render()
-        }
-        composable(ScreenNav.TimerDetails.nav.route) {
-            val onPlayNavigateTo = { navController.navigate(ScreenNav.TimerRun.nav.route) }
-            val onDeleteTimerNavigateTo = { navController.navigate(ScreenNav.Home.nav.route) }
-
-            ScreenNav.TimerDetails(
-                event = onEvent,
-                navController = navController,
-                onPlayNavigateTo = { onPlayNavigateTo() },
-                onDeleteTimerNavigateTo = { onDeleteTimerNavigateTo() }
-            ).Render()
-        }
-        composable(ScreenNav.TimerRun.nav.route) {
-            ScreenNav.TimerRun(
-                event = onEvent,
-                navController = navController,
-            ).Render()
-        }
-
-        composable(ScreenNav.Profile.nav.route) {
-            val onEditNavigateTo = { navController.navigate(ScreenNav.ProfileDetails.nav.route) }
-            val onLogOutNavigateTo = {
-                navController.navigate(ScreenNav.Start.nav.route) {
-                    popUpTo("open") {
-                        inclusive = true
-                    }
-                }
-            }
-
-            ScreenNav.Profile(
-                event = onEvent,
-                navController = navController,
-                onEditNavigateTo = { onEditNavigateTo() },
-                onLogOutNavigateTo = { onLogOutNavigateTo() },
-                clickGoogleSignOut = clickGoogleSignOut
-            ).Render()
-        }
-        composable(ScreenNav.ProfileDetails.nav.route) {
-            ScreenNav.ProfileDetails(
-                event = onEvent,
-                navController = navController,
-            ).Render()
-        }
-
-
-        composable(ScreenNav.Settings.nav.route) {
-            val onDeleteAccountNavigateTo = { navController.navigate(ScreenNav.Start.nav.route) }
-            val clickDeleteAccount = { onEvent(UserEvents.DeleteUser) }
-
-            ScreenNav.Settings(
-                event = onEvent,
-                navController = navController,
-                onDeleteAccountNavigateTo = { onDeleteAccountNavigateTo() },
-                clickDeleteAccount = { clickDeleteAccount() }
-            ).Render()
-        }
-    }
+    return viewModel(parentEntry)
 }

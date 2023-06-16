@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.MainTopAppBar
@@ -35,15 +36,16 @@ import com.example.syncfit.composables.screens.IntervalList
 import com.example.syncfit.composables.screens.Repeats
 import com.example.syncfit.composables.screens.TimerName
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimerDetailsScreen(
+    state : AppState,
+    viewModel: SyncFitViewModel,
     onEvent: (AppEvents) -> Unit,
-    navController: NavController,
-    onPlayNavigateTo: () -> Unit,
-    onDeleteTimerNavigateTo: () -> Unit
+    navController: NavController
 ) {
     var edit by remember { mutableStateOf(false) }
 
@@ -62,7 +64,7 @@ fun TimerDetailsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { onPlayNavigateTo() },
+                        onClick = { navController.navigate(ScreenConstants.Route.Timers.RUN) },
                     ) {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
@@ -71,7 +73,7 @@ fun TimerDetailsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { onDeleteTimerNavigateTo() },
+                        onClick = { navController.navigate(ScreenConstants.Route.Timers.HOME) },
                         modifier = Modifier.padding(end = Dimensions.Spacing.medium),
                     ) {
                         Icon(
