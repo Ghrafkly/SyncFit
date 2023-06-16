@@ -1,6 +1,7 @@
 package com.example.syncfit.composables.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,8 +81,6 @@ fun SignInTextFields(
     navController: NavController,
     clickGoogleLogIn: () -> Unit,
 ) {
-    onEvent(AuthEvents.ResetSignIn)
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var invalidUser by remember { mutableStateOf(false) }

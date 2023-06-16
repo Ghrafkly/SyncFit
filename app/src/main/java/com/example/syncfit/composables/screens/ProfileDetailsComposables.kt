@@ -36,6 +36,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomOutlinedTextField
 import com.example.syncfit.composables.custom.MainTopAppBar
+import com.example.syncfit.database.entities.User
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.events.UserEvents
@@ -242,7 +243,24 @@ fun ProfileDetailsFields(
                 Text(text = "Edit")
             }
             FilledTonalButton(
-                onClick = { fieldEditable = false },
+                onClick = {
+                    phoneNumberValidation = (phoneNumber?.length ?: 0) < 9
+                    passwordValidation = (password?.length ?: 0) < 8
+                    confirmPasswordValidation = password != confirmPassword
+
+                    if (phoneNumberValidation || passwordValidation || confirmPasswordValidation) return@FilledTonalButton
+
+                    fieldEditable = false
+                    onEvent(UserEvents.UpdateUser(
+                        User(
+                            email = state.userState.user.email,
+                            firstname = firstName ?: "",
+                            lastname = lastName ?: "",
+                            phoneNumber = phoneNumber ?: "",
+                            password = password ?: "",
+                        )
+                    ))
+                },
                 modifier = Modifier
                     .width(Dimensions.ButtonWidth.small),
             ) {

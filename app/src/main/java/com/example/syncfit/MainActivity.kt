@@ -118,6 +118,17 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                LaunchedEffect(key1 = state.userState.signInError) {
+                    if (state.userState.signInError != null) {
+                        Log.d("MainActivity", state.userState.signInError!!)
+                        Toast.makeText(
+                            applicationContext,
+                            state.userState.signInError,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
                 LaunchedEffect(key1 = Unit) {
                     if (googleAuthClient.getSignedInGoogleUser() != null) {
                         Log.i("MainActivity", "User already signed in")

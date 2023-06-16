@@ -52,7 +52,7 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.SpaceAround
             ) {
                 ProfileImage()
-                WelcomeMessage(user = "USER")
+                state.userState.user.firstname?.let { WelcomeMessage(user = it) }
                 ProfileActions(
                     onEvent = onEvent,
                     navController = navController,

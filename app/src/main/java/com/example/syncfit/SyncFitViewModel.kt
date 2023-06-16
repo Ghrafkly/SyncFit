@@ -76,6 +76,26 @@ class SyncFitViewModel(
         }
     }
 
+    private fun googleSignIn(user: User) {
+        viewModelScope.launch {
+            val dbUser: User? = userDao.getUserByKey(user.email)
+            if (dbUser == null) {
+                userDao.upsertUser(user)
+                logIn(user)
+            } else {
+                _userState.update {
+                    it.copy(
+                        user = User(),
+                        isSignInSuccessful = false,
+                        signInError = "Email exists for this account",
+                    )
+                }
+
+                googleAuthClient.signOut()
+            }
+        }
+    }
+
     private fun logIn(user: User) {
         _userState.update {
             it.copy(
@@ -119,6 +139,20 @@ class SyncFitViewModel(
         }
     }
 
+    private fun updateUser(user: User) {
+        _userState.update {
+            it.copy(
+                user = user,
+                isSignInSuccessful = true,
+                signInError = null,
+            )
+        }
+
+        viewModelScope.launch {
+            userDao.upsertUser(user)
+        }
+    }
+
     private fun signOut() {
         viewModelScope.launch {
             if (state.value.userState.user.googleUser) {
@@ -140,7 +174,7 @@ class SyncFitViewModel(
 
     private fun authEvent(event: AuthEvents) {
         when (event) {
-            is AuthEvents.GoogleSignIn -> logIn(event.user)
+            is AuthEvents.GoogleSignIn -> googleSignIn(event.user)
             is AuthEvents.LocalSignIn -> userValidation(event.email, event.password)
             is AuthEvents.CreateAccount -> createAccount(event.user)
             is AuthEvents.LogOut -> signOut()
@@ -153,7 +187,7 @@ class SyncFitViewModel(
             is UserEvents.CreateUser -> TODO()
             UserEvents.DeleteUser -> deleteAccount()
             is UserEvents.GetUserByKey -> TODO()
-            is UserEvents.UpdateUser -> TODO()
+            is UserEvents.UpdateUser -> updateUser(event.user)
         }
 //        when (event) {
 //            is UserEvents.CreateUser -> viewModelScope.launch { userDao.createUser(event.user) }

@@ -88,8 +88,6 @@ fun CreateAccountTextFields(
     navController: NavController,
     clickGoogleLogIn: () -> Unit,
 ) {
-    onEvent(AuthEvents.ResetSignIn)
-
     var email by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
