@@ -4,10 +4,15 @@ import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.entities.UserWithTimers
 
 data class TimerState(
-    val timers: List<UserWithTimers> = emptyList(),
     val timer: Timer = Timer(),
-    val isTimerAdded: Boolean = false,
-    val isTimerUpdated: Boolean = false,
-    val isTimerDeleted: Boolean = false,
+    val timers: List<UserWithTimers> = emptyList(),
+    val isTimerRunning: Boolean = false,
+    val isTimerCreateSuccessful: Boolean = false,
     val timerError: String? = null,
+
+    var isTimerNameValid: Boolean = true,
+    var isTimerIntervalsValid: Boolean = true, /* TODO: Check intervals for validity */
+    var isTimerIntensityValid: Boolean = true,
+    var isTimerEnvironmentValid: Boolean = true,
+    var isTimerRepeatsValid: Boolean = true,
 )

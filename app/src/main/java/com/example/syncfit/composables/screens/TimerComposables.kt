@@ -1,12 +1,15 @@
 package com.example.syncfit.composables.screens
 
+import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +24,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -34,12 +38,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -48,6 +56,8 @@ import com.example.syncfit.composables.custom.CustomOutlinedTextField
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.events.TimerEvents
+import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
 
@@ -120,43 +130,71 @@ fun TimersViewActions(
 }
 
 @Composable
-fun TimerName() {
+fun TimerName(
+    state: AppState,
+    onEvent: (AppEvents) -> Unit,
+) {
     var userInput by remember { mutableStateOf("") }
 
-    CustomOutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth(0.9f),
-        singleLine = true,
-        value = userInput,
-        onValueChange = { userInput = it },
-        label = { Text("Timer Name") }, /* TODO: Get timer name from database */
-        trailingIcon = {
-            IconButton(onClick = { userInput = "" }) {
-                Icon(Icons.Default.Close, contentDescription = "Clear")
-            }
-        },
-    )
+    Box(modifier = Modifier.padding(bottom = 5.dp)) {
+        CustomOutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth(0.9f),
+            singleLine = true,
+            value = userInput,
+            onValueChange = {
+                userInput = it
+                onEvent(TimerEvents.UpdateTimerName(it))
+            },
+            label = { Text("Timer Name") }, /* TODO: Get timer name from database */
+            trailingIcon = {
+                IconButton(onClick = {
+                    userInput = ""
+                    onEvent(TimerEvents.UpdateTimerName(userInput))
+                }) {
+                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                }
+            },
+            isError = !state.timerState.isTimerNameValid
+        )
+        if (!state.timerState.isTimerNameValid) {
+            Text(
+                text = "Timer name cannot be empty",
+                style = TextStyle(
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp
+                ),
+                modifier = Modifier
+                    .padding(top = 45.dp)
+                    .align(Alignment.BottomStart)
+                    .offset { IntOffset(0, 40) },
+            )
+        }
+    }
+
 }
 
 @Composable
-fun Repeats() {
+fun Repeats(
+    onEvent: (AppEvents) -> Unit,
+) {
+    var counter by remember { mutableIntStateOf(0) }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text ="\$count$")
+        Text(
+            text = counter.toString(),
+            modifier = Modifier
+        )
         Spacer(modifier = Modifier.width(Dimensions.Spacing.small))
         IconButton(
-            onClick = { /*TODO: Decrease count*/ },
+            onClick = {
+                if (counter > 0) counter--
+                onEvent(TimerEvents.UpdateTimerRepeats(counter))
+            },
             modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(
-                        topStartPercent = 50,
-                        bottomStartPercent = 50,
-                    )
-                )
-                .width(50.dp)
+                .width(40.dp)
                 .size(27.dp),
             content = {
                 Icon(
@@ -166,17 +204,12 @@ fun Repeats() {
             }
         )
         IconButton(
-            onClick = { /*TODO: Increase count*/ },
+            onClick = {
+                counter++
+                onEvent(TimerEvents.UpdateTimerRepeats(counter))
+            },
             modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(
-                        topEndPercent = 50,
-                        bottomEndPercent = 50
-                    )
-                )
-                .width(50.dp)
+                .width(40.dp)
                 .size(27.dp),
             content = {
                 Icon(
@@ -275,7 +308,13 @@ fun IntervalCard(remove: Boolean) {
 }
 
 @Composable
-fun Intensity() {
+fun Intensity(
+    state: AppState,
+    onEvent: (AppEvents) -> Unit,
+) {
+    var lowSelected by remember { mutableStateOf(false) }
+    var highSelected by remember { mutableStateOf(false) }
+
     Text(text = "Intensity")
     Spacer(modifier = Modifier.height(Dimensions.Spacing.small))
     Row(
@@ -283,13 +322,37 @@ fun Intensity() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         OutlinedButton(
-            onClick = { /*TODO: Highlight on select*/ },
+            onClick = {
+                lowSelected = true
+                highSelected = false
+                onEvent(TimerEvents.UpdateTimerIntensity(Intensity.LOW))
+            },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                if (lowSelected) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                },
+            ),
             modifier = Modifier.weight(1f),
         ) {
             Text(text = Intensity.LOW.name)
         }
         OutlinedButton(
-            onClick = { /*TODO: Highlight on select*/ },
+            onClick = {
+                lowSelected = false
+                highSelected = true
+                onEvent(TimerEvents.UpdateTimerIntensity(Intensity.HIGH))
+            },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                if (highSelected) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                },
+            ),
             modifier = Modifier.weight(1f),
         ) {
             Text(text = Intensity.HIGH.name)
@@ -298,7 +361,13 @@ fun Intensity() {
 }
 
 @Composable
-fun Environment() {
+fun Environment(
+    onEvent: (AppEvents) -> Unit,
+) {
+    var indoorSelected by remember { mutableStateOf(false) }
+    var outdoorSelected by remember { mutableStateOf(false) }
+    var bothSelected by remember { mutableStateOf(false) }
+
     Text(text = "Environment")
     Spacer(modifier = Modifier.height(Dimensions.Spacing.small))
     Row(
@@ -306,49 +375,61 @@ fun Environment() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         OutlinedButton(
-            onClick = { /*TODO: Highlight on select*/ },
+            onClick = {
+                indoorSelected = true
+                outdoorSelected = false
+                bothSelected = false
+                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.INDOOR))
+            },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                if (indoorSelected) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                },
+            ),
             modifier = Modifier.weight(1f),
         ) {
             Text(text = Environment.INDOOR.name)
         }
         OutlinedButton(
-            onClick = { /*TODO: Highlight on select*/ },
+            onClick = {
+                indoorSelected = false
+                outdoorSelected = true
+                bothSelected = false
+                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.OUTDOOR))
+            },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                if (outdoorSelected) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                },
+            ),
             modifier = Modifier.weight(1f),
         ) {
             Text(text = Environment.OUTDOOR.name)
         }
         OutlinedButton(
-            onClick = { /*TODO: Highlight on select*/ },
+            onClick = {
+                indoorSelected = false
+                outdoorSelected = false
+                bothSelected = true
+                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.BOTH))
+            },
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                if (bothSelected) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                },
+            ),
             modifier = Modifier.weight(1f),
         ) {
             Text(text = Environment.BOTH.name)
-        }
-    }
-}
-
-@Composable
-fun TimerViewMenu(
-    onCreateNavigateTo: () -> Unit,
-    filterClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = Dimensions.Spacing.large),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedButton(
-            onClick = filterClick,
-            modifier = Modifier.width(Dimensions.ButtonWidth.small),
-        ) {
-            Text(text = "Filter")
-        }
-        FilledTonalButton(
-            onClick = { onCreateNavigateTo() },
-            modifier = Modifier.width(Dimensions.ButtonWidth.small),
-        ) {
-            Text(text = "Create Timer")
         }
     }
 }

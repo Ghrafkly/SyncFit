@@ -93,7 +93,10 @@ fun TimerDetailsScreen(
                     .padding(top = Dimensions.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                TimerName()
+                TimerName(
+                    state = state,
+                    onEvent = onEvent
+                )
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
                     modifier = Modifier
@@ -110,7 +113,7 @@ fun TimerDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(text = "Repeats")
-                    Repeats()
+                    Repeats(onEvent = onEvent)
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -118,7 +121,7 @@ fun TimerDetailsScreen(
                         .fillMaxWidth(0.9f),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Intensity()
+                    Intensity(state = state, onEvent = onEvent)
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -126,7 +129,7 @@ fun TimerDetailsScreen(
                         .fillMaxWidth(0.9f),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Environment()
+                    Environment(onEvent = onEvent)
                 }
             }
         },

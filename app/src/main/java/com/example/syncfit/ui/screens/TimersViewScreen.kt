@@ -79,7 +79,7 @@ fun TimersViewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(Dimensions.Spacing.small),
                 ) {
-                    for (i in 0..15) {
+                    for (i in 0..2) {
                         item {
                             TimerCard(
                                 onEvent = onEvent,

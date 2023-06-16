@@ -1,6 +1,8 @@
 package com.example.syncfit
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
@@ -13,6 +15,9 @@ import com.example.syncfit.database.daos.UserDao
 import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.entities.User
 import com.example.syncfit.database.entities.UserWithTimers
+import com.example.syncfit.database.models.Environment
+import com.example.syncfit.database.models.Intensity
+import com.example.syncfit.database.models.Interval
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.events.ClickEvents
@@ -42,14 +47,101 @@ class SyncFitViewModel(
 ): ViewModel() {
     private val _userState = MutableStateFlow(UserState())
     private val _timerState = MutableStateFlow(TimerState())
+    private val _timer = MutableStateFlow(Timer())
     private val _state = MutableStateFlow(AppState())
 
-    val state = combine(_state, _userState, _timerState,) { state, userState, timerState ->
+    val state = combine(_state, _userState, _timerState) { state, userState, timerState ->
         state.copy(
             userState = userState,
             timerState = timerState,
         )
     }.stateIn(viewModelScope,  SharingStarted.WhileSubscribed(5000), AppState())
+
+    private fun updateTimerName(name: String) {
+        _timer.update { it.copy(timerName = name) }
+        _timerState.update { it.copy(isTimerNameValid = true) }
+    }
+
+    private fun updateTimerIntervals(intervals: List<Interval>) {
+        _timer.update { it.copy(timerIntervals = intervals) }
+        _timerState.update { it.copy(isTimerIntervalsValid = true) }
+    }
+
+    private fun updateTimerRepeats(repeats: Int) {
+        _timer.update { it.copy(timerRepeats = repeats) }
+        _timerState.update { it.copy(isTimerRepeatsValid = true) }
+    }
+
+    private fun updateTimerIntensity(intensity: Intensity) {
+        _timer.update { it.copy(timerIntensity = intensity) }
+        _timerState.update { it.copy(isTimerIntensityValid = true) }
+    }
+
+    private fun updateTimerEnvironment(environment: Environment) {
+        _timer.update { it.copy(timerEnvironment = environment) }
+        _timerState.update { it.copy(isTimerEnvironmentValid = true) }
+    }
+
+    private fun updateTimerValidation() {
+        Log.i("SyncFitViewModel", "----------------------------------------------------")
+        Log.i("SyncFitViewModel", "----------------------------------------------------")
+        Log.i("SyncFitViewModel", "Timer Name: ${_timer.value.timerName} : Is Valid: ${_timer.value.timerName.isNotEmpty()}")
+        Log.i("SyncFitViewModel", "Timer Intervals: ${_timer.value.timerIntervals} : Is Valid: ${_timer.value.timerIntervals.isNotEmpty()}")
+        Log.i("SyncFitViewModel", "Timer Repeats: ${_timer.value.timerRepeats} : Is Valid: ${_timer.value.timerRepeats > 0}")
+        Log.i("SyncFitViewModel", "Timer Intensity: ${_timer.value.timerIntensity} : Is Valid: ${_timer.value.timerIntensity != Intensity.NONE}")
+        Log.i("SyncFitViewModel", "Timer Environment: ${_timer.value.timerEnvironment} : Is Valid: ${_timer.value.timerEnvironment != Environment.NONE}")
+
+        _timerState.update {
+            it.copy(
+                isTimerNameValid = _timer.value.timerName.isNotEmpty(),
+                isTimerIntervalsValid = _timer.value.timerIntervals.isNotEmpty(),
+                isTimerRepeatsValid = _timer.value.timerRepeats > 0,
+                isTimerIntensityValid = _timer.value.timerIntensity != Intensity.NONE,
+                isTimerEnvironmentValid = _timer.value.timerEnvironment != Environment.NONE,
+            )
+        }
+    }
+
+    private fun updateTimer() {
+        updateTimerValidation()
+
+        if (_timerState.value.isTimerNameValid &&
+            _timerState.value.isTimerIntervalsValid &&
+            _timerState.value.isTimerRepeatsValid &&
+            _timerState.value.isTimerIntensityValid &&
+            _timerState.value.isTimerEnvironmentValid
+        ) {
+            val updatedTimer = Timer(
+                userId = state.value.userState.user.email,
+                timerName = _timer.value.timerName,
+                timerIntervals = _timer.value.timerIntervals,
+                timerDuration = _timer.value.timerDuration,
+                timerRepeats = _timer.value.timerRepeats,
+                timerIntensity = _timer.value.timerIntensity,
+                timerEnvironment = _timer.value.timerEnvironment,
+                timerDateLastUsed = System.currentTimeMillis(),
+            )
+
+            _timerState.update {
+                it.copy(
+                    timer = updatedTimer,
+                    isTimerCreateSuccessful = true,
+                    timerError = ""
+                )
+            }
+
+            viewModelScope.launch {
+                timerDao.upsertTimer(updatedTimer)
+            }
+        } else {
+            _timerState.update {
+                it.copy(
+                    isTimerCreateSuccessful = false,
+                    timerError = "Please fix errors"
+                )
+            }
+        }
+    }
 
     fun onEvent(event: AppEvents) {
         if (event is AuthEvents) authEvent(event)
@@ -79,7 +171,7 @@ class SyncFitViewModel(
     private fun googleSignIn(user: User) {
         viewModelScope.launch {
             val dbUser: User? = userDao.getUserByKey(user.email)
-            if (dbUser == null) {
+            if (dbUser == null || dbUser.googleUser) {
                 userDao.upsertUser(user)
                 logIn(user)
             } else {
@@ -175,6 +267,7 @@ class SyncFitViewModel(
     private fun authEvent(event: AuthEvents) {
         when (event) {
             is AuthEvents.GoogleSignIn -> googleSignIn(event.user)
+            is AuthEvents.ExistingUserSignIn -> logIn(event.user)
             is AuthEvents.LocalSignIn -> userValidation(event.email, event.password)
             is AuthEvents.CreateAccount -> createAccount(event.user)
             is AuthEvents.LogOut -> signOut()
@@ -205,6 +298,18 @@ class SyncFitViewModel(
     }
 
     private fun timerEvent(event: TimerEvents) {
+        when (event) {
+            is TimerEvents.CreateTimer -> TODO()
+            is TimerEvents.DeleteTimer -> TODO()
+            is TimerEvents.GetTimerByKey -> TODO()
+            is TimerEvents.GetTimersByUser -> TODO()
+            is TimerEvents.UpdateTimer -> updateTimer()
+            is TimerEvents.UpdateTimerName -> updateTimerName(event.name)
+            is TimerEvents.UpdateTimerIntervals -> updateTimerIntervals(event.intervals)
+            is TimerEvents.UpdateTimerRepeats -> updateTimerRepeats(event.repeats)
+            is TimerEvents.UpdateTimerIntensity -> updateTimerIntensity(event.intensity)
+            is TimerEvents.UpdateTimerEnvironment -> updateTimerEnvironment(event.environment)
+        }
 //        when (event) {
 //            is TimerEvents.CreateTimer -> viewModelScope.launch { timerDao.createTimer(event.timer) }
 //            is TimerEvents.DeleteTimer -> viewModelScope.launch {
@@ -239,9 +344,7 @@ class SyncFitViewModel(
         _timerState.update { it.copy(
             timer = Timer(),
             timers = emptyList(),
-            isTimerAdded = false,
-            isTimerUpdated = false,
-            isTimerDeleted = false,
+            isTimerRunning = false,
             timerError = null,
         ) }
     }

@@ -7,19 +7,15 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.entities.UserWithTimers
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TimerDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun createTimer(timer: Timer)
-
-    @Delete
-    suspend fun deleteTimer(timer: Timer)
-    @Update
-    suspend fun updateTimer(timer: Timer)
+    @Upsert
+    suspend fun upsertTimer(timer: Timer)
 
     @Transaction
     @Query("SELECT * FROM users WHERE email = :key")

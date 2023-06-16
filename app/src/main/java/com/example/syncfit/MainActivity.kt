@@ -76,7 +76,11 @@ class MainActivity : ComponentActivity() {
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SyncFitViewModel(db.userDao, db.timerDao, googleAuthClient, SavedStateHandle()) as T
+                    return SyncFitViewModel(
+                        db.userDao,
+                        db.timerDao,
+                        googleAuthClient,
+                        SavedStateHandle()) as T
                 }
             }
         }
@@ -132,6 +136,11 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(key1 = Unit) {
                     if (googleAuthClient.getSignedInGoogleUser() != null) {
                         Log.i("MainActivity", "User already signed in")
+
+                        viewModel.onEvent(
+                            AuthEvents.ExistingUserSignIn(googleAuthClient.getSignedInGoogleUser()!!)
+                        )
+
                         navController.navigate(ScreenConstants.Route.Timers.HOME)
                     }
                 }
