@@ -202,7 +202,6 @@ class SyncFitViewModel(
         viewModelScope.launch {
             val dbUser: User? = userDao.getUserByKey(user.email)
             if (dbUser == null || dbUser.googleUser) {
-                userDao.upsertUser(user)
                 logIn(user)
             } else {
                 _userState.update {
@@ -219,16 +218,29 @@ class SyncFitViewModel(
     }
 
     private fun logIn(user: User) {
-        _userState.update {
-            it.copy(
-                user = user,
-                isSignInSuccessful = true,
-                signInError = null,
-            )
-        }
-
         viewModelScope.launch {
-            userDao.upsertUser(user)
+            val dbUser: User? = userDao.getUserByKey(user.email)
+            if (dbUser == null) {
+                _userState.update {
+                    it.copy(
+                        user = user,
+                        isSignInSuccessful = true,
+                        signInError = null,
+                    )
+                }
+                userDao.upsertUser(user)
+
+            } else {
+                _userState.update {
+                    it.copy(
+                        user = dbUser,
+                        isSignInSuccessful = true,
+                        signInError = null,
+                    )
+                }
+                userDao.upsertUser(dbUser)
+            }
+
             timersList()
         }
     }

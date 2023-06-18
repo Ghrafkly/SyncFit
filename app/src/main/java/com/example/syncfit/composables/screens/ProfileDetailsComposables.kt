@@ -151,7 +151,7 @@ fun ProfileDetailsFields(
 
         Box(modifier = Modifier.padding(bottom = 5.dp)) {
             CustomOutlinedTextField(
-                enabled = fieldEditable,
+                enabled = fieldEditable && !state.userState.user.googleUser,
                 value = password ?: "",
                 onValueChange = {
                     password = it
@@ -189,7 +189,7 @@ fun ProfileDetailsFields(
         }
         Box(modifier = Modifier.padding(bottom = 5.dp)) {
             CustomOutlinedTextField(
-                enabled = fieldEditable,
+                enabled = fieldEditable && !state.userState.user.googleUser,
                 value = confirmPassword ?: "",
                 onValueChange = {
                     confirmPassword = it
@@ -244,11 +244,16 @@ fun ProfileDetailsFields(
             }
             FilledTonalButton(
                 onClick = {
-                    phoneNumberValidation = (phoneNumber?.length ?: 0) < 9
-                    passwordValidation = (password?.length ?: 0) < 8
-                    confirmPasswordValidation = password != confirmPassword
+                    if (!state.userState.user.googleUser) {
+                        passwordValidation = (password?.length ?: 0) < 8
+                        confirmPasswordValidation = password != confirmPassword
+                        phoneNumberValidation = (phoneNumber?.length ?: 0) < 9
+                    }
 
-                    if (phoneNumberValidation || passwordValidation || confirmPasswordValidation) return@FilledTonalButton
+                    if (phoneNumberValidation ||
+                        passwordValidation ||
+                        confirmPasswordValidation
+                    ) return@FilledTonalButton
 
                     fieldEditable = false
                     onEvent(UserEvents.UpdateUser(
@@ -258,6 +263,7 @@ fun ProfileDetailsFields(
                             lastname = lastName ?: "",
                             phoneNumber = phoneNumber ?: "",
                             password = password ?: "",
+                            googleUser = state.userState.user.googleUser,
                         )
                     ))
                 },

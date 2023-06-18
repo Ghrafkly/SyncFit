@@ -440,6 +440,7 @@ fun DefaultIntervalCard(
                     .focusProperties { canFocus = focus }
                     .clickable { showTimePicker = true },
                 text = intervalTime,
+                fontSize = 16.sp,
             )
         },
         colors = ListItemDefaults.colors(
@@ -479,7 +480,12 @@ fun IntervalCard(
             }
         },
         headlineContent = { Text(text = intervalName) },
-        trailingContent = { Text(text = intervalTime) },
+        trailingContent = {
+            Text(
+                text = intervalTime.substring(3),
+                fontSize = 16.sp,
+            )
+        },
     )
 }
 
