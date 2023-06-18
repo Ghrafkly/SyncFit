@@ -209,6 +209,7 @@ class MainActivity : ComponentActivity() {
                                 state = state,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
+                                viewModel = viewModel,
                             )
                         }
                         composable(ScreenConstants.Route.Timers.CREATE) {
@@ -232,6 +233,7 @@ class MainActivity : ComponentActivity() {
                                 state = state,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
+                                viewModel = viewModel,
                             )
                         }
                         composable(ScreenConstants.Route.Profile.HOME) {

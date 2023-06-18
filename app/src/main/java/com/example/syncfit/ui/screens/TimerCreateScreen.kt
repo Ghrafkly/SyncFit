@@ -43,6 +43,7 @@ import com.example.syncfit.composables.screens.IntervalList
 import com.example.syncfit.composables.screens.Repeats
 import com.example.syncfit.composables.screens.TimerName
 import com.example.syncfit.database.entities.Timer
+import com.example.syncfit.database.models.*
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.TimerEvents
 import com.example.syncfit.states.AppState
@@ -60,15 +61,17 @@ fun TimerCreateScreen(
     val focusManager = LocalFocusManager.current
 
     val data by viewModel.state.collectAsState()
-    val timer = data.timerState.timer
+    val timerValid = data.timerState.isTimerCreateSuccessful
+    if (timerValid) {
+        navController.navigate(ScreenConstants.Route.Timers.HOME)
+        viewModel.resetCreate()
+    }
+    var timer = Timer()
 
     var timerName by remember { mutableStateOf(timer.timerName) }
-    var timerIntervals by remember { mutableStateOf(timer.timerIntervals) }
     var timerRepeats by remember { mutableIntStateOf(timer.timerRepeats) }
     var timerIntensity by remember { mutableStateOf(timer.timerIntensity) }
     var timerEnvironment by remember { mutableStateOf(timer.timerEnvironment) }
-
-    println(timer)
 
     var firstEntry by remember { mutableStateOf(true) }
     if (firstEntry) {
@@ -77,7 +80,7 @@ fun TimerCreateScreen(
         data.timerState.isTimerRepeatsValid = true
         data.timerState.isTimerIntensityValid = true
         data.timerState.isTimerEnvironmentValid = true
-        data.timerState.timer.timerIntervals = mutableListOf()
+        viewModel.resetCreate()
         firstEntry = false
     }
 
@@ -96,19 +99,14 @@ fun TimerCreateScreen(
                 iconButtons = {
                     IconButton(
                         onClick = {
-                            onEvent(TimerEvents.UpdateTimer(
-                                Timer(
-                                    userId = data.userState.user.email,
-                                    timerName = timerName,
-                                    timerIntervals = timerIntervals,
-                                    timerTimeStamp = timer.timerTimeStamp,
-                                    timerRepeats = timerRepeats,
-                                    timerIntensity = timerIntensity,
-                                    timerEnvironment = timerEnvironment,
-                                    timerDateLastUsed = timer.timerDateLastUsed,
-                                )
-                            ))
-                            
+                            timer = timer.copy(
+                                timerName = timerName,
+                                timerRepeats = timerRepeats,
+                                timerIntensity = timerIntensity,
+                                timerEnvironment = timerEnvironment,
+                            )
+
+                            onEvent(TimerEvents.UpdateTimer(timer, "create"))
                         },
                         modifier = Modifier.padding(end = Dimensions.Spacing.medium),
                     ) {
@@ -118,7 +116,10 @@ fun TimerCreateScreen(
                         )
                     }
                 },
-                onBackNavigateTo = { navController.navigate(ScreenConstants.Route.Timers.HOME) }
+                onBackNavigateTo = {
+                    viewModel.resetCreate()
+                    navController.navigate(ScreenConstants.Route.Timers.HOME)
+                }
             )
         },
         content = { innerPadding ->

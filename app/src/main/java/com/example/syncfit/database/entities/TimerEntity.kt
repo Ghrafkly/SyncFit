@@ -75,4 +75,28 @@ data class Timer(
         timerDateLastUsed = timerDateLastUsed,
         timerTimesUsed = 0,
     )
+
+    constructor(
+        userId: String,
+        timerId : Int,
+        timerName: String,
+        timerIntervals: List<Interval>,
+        timerTimeStamp: Long,
+        timerRepeats: Int,
+        timerIntensity: Intensity,
+        timerEnvironment: Environment,
+        timerDateLastUsed: Long,
+    ) : this(
+        timerId = timerId,
+        userId = userId,
+        timerName = timerName,
+        timerIntervals = timerIntervals,
+        timerTimeStamp = timerTimeStamp,
+        timerRepeats = timerRepeats,
+        timerIntensity = timerIntensity,
+        timerEnvironment = timerEnvironment,
+        timerDateCreated = System.currentTimeMillis(),
+        timerDateLastUsed = timerDateLastUsed,
+        timerTimesUsed = 0,
+    )
 }

@@ -15,8 +15,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,6 +28,7 @@ import androidx.navigation.NavController
 import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
+import com.example.syncfit.composables.custom.CustomTopAppBar
 import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.database.models.TimerState
 import com.example.syncfit.events.AppEvents
@@ -35,13 +40,26 @@ import com.example.syncfit.ui.theme.Dimensions
 fun TimerRunScreen(
     state : AppState,
     onEvent: (AppEvents) -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: SyncFitViewModel,
 ) {
     val timerState = remember { mutableStateOf(TimerState.STOPPED) }
 
+    val data by viewModel.state.collectAsState()
+    var timer = data.timerState.timer.copy(
+        timerName = data.timerState.timer.timerName,
+        timerIntervals = data.timerState.timer.timerIntervals,
+        timerRepeats = data.timerState.timer.timerRepeats,
+        timerIntensity = data.timerState.timer.timerIntensity,
+        timerEnvironment = data.timerState.timer.timerEnvironment,
+    )
+
     Scaffold(
         topBar = {
-            MainTopAppBar(title = "<timer name>")
+            CustomTopAppBar(
+                title = timer.timerName,
+                onBackNavigateTo = { navController.popBackStack() },
+            )
         },
         content = { innerPadding ->
             Column(
@@ -53,8 +71,12 @@ fun TimerRunScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Dimensions.Spacing.large),
             ) {
-                Text(text = "Repeat: 1 / 3") /*TODO: Get current repeat*/
-                Text(text = "Interval: Walk") /*TODO: Get current interval*/
+                val totalRepeats by remember { mutableIntStateOf(timer.timerIntervals.size) }
+                var currentRepeat by remember { mutableIntStateOf(1) }
+                var intervalName by remember { mutableStateOf(timer.timerIntervals[0].intervalName) }
+
+                Text(text = "Repeat: $currentRepeat / $totalRepeats") /*TODO: Get current repeat*/
+                Text(text = "Interval: $intervalName") /*TODO: Get current interval*/
                 Text(
                     text = "00:00", /*TODO: Get time and countdown*/
                     fontSize = MaterialTheme.typography.displayLarge.fontSize,
@@ -83,13 +105,19 @@ fun TimerRunScreen(
                         )
                     }
                     FilledTonalButton(
-                        onClick = { /*TODO: Restart timer*/ },
+                        onClick = {
+                            currentRepeat = 1
+                            intervalName = timer.timerIntervals[0].intervalName
+                        },
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(text = "Restart")
                     }
                     Button(
-                        onClick = { /*TODO: Skip interval*/ },
+                        onClick = { if (currentRepeat < totalRepeats) {
+                            currentRepeat++
+                            intervalName = timer.timerIntervals[currentRepeat - 1].intervalName
+                        } },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,

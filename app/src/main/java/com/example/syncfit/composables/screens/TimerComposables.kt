@@ -26,7 +26,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DismissState
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,24 +75,35 @@ import com.example.syncfit.ui.theme.Dimensions
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.example.syncfit.SyncFitViewModel
+import com.example.syncfit.database.entities.Timer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerCard(
     modifier: Modifier = Modifier,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
+    timer: Timer,
 ) {
     var favourite by remember { mutableStateOf(false) }
 
     ListItem(
-        modifier = Modifier.clickable { navController.navigate(ScreenConstants.Route.Timers.DETAILS) },
-        headlineContent = { Text("Leg Squats") },
+        modifier = modifier.clickable {
+            onEvent(TimerEvents.GetTimer(timer.timerId))
+            navController.navigate(ScreenConstants.Route.Timers.DETAILS)
+        },
+        headlineContent = { Text(timer.timerName) },
         supportingContent = {
-            Text("1m45s - 3 sets - 10 reps")
+            val duration = timer.timerTimeStamp.fromTimeStamp()
+            val sets = timer.timerIntervals.size
+            val reps = timer.timerRepeats
+
+            Text("$duration - $sets sets - $reps reps")
         },
         leadingContent = {
             IconButton(onClick = { favourite = !favourite }) {
@@ -105,7 +118,10 @@ fun TimerCard(
             }
         },
         trailingContent = {
-            IconButton(onClick = { navController.navigate(ScreenConstants.Route.Timers.RUN) }) {
+            IconButton(onClick = {
+                onEvent(TimerEvents.GetTimer(timer.timerId))
+                navController.navigate(ScreenConstants.Route.Timers.RUN)
+            }) {
                 Icon(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = "Start",
@@ -148,6 +164,8 @@ fun TimersViewActions(
 
 @Composable
 fun TimerName(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
     state: AppState,
     onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
@@ -158,7 +176,7 @@ fun TimerName(
 
     Box(modifier = Modifier.padding(bottom = 5.dp)) {
         CustomOutlinedTextField(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth(0.9f),
             singleLine = true,
             value = userInput,
@@ -173,7 +191,8 @@ fun TimerName(
                     Icon(Icons.Default.Close, contentDescription = "Clear")
                 }
             },
-            isError = !state.timerState.isTimerNameValid
+            isError = !state.timerState.isTimerNameValid,
+            enabled = focus,
         )
         if (!state.timerState.isTimerNameValid) {
             Text(
@@ -194,6 +213,8 @@ fun TimerName(
 
 @Composable
 fun Repeats(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
     state: AppState,
@@ -218,27 +239,28 @@ fun Repeats(
         }
     }
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            modifier = Modifier.weight(2f),
+            modifier = modifier.weight(2f),
             text = annotatedString
         )
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = counter.toString(),
-                modifier = Modifier
+                modifier = modifier
             )
-            Spacer(modifier = Modifier.width(Dimensions.Spacing.small))
+            Spacer(modifier = modifier.width(Dimensions.Spacing.small))
             IconButton(
                 onClick = {
                     if (counter > 0) counter--
                     repeatsChange(counter)
                 },
-                modifier = Modifier
+                modifier = modifier
                     .width(40.dp)
                     .size(27.dp),
                 content = {
@@ -246,14 +268,15 @@ fun Repeats(
                         Icons.Default.Remove,
                         contentDescription = "Reduce"
                     )
-                }
+                },
+                enabled = focus
             )
             IconButton(
                 onClick = {
                     counter++
                     repeatsChange(counter)
                 },
-                modifier = Modifier
+                modifier = modifier
                     .width(40.dp)
                     .size(27.dp),
                 content = {
@@ -261,7 +284,8 @@ fun Repeats(
                         Icons.Default.Add,
                         contentDescription = "Increase"
                     )
-                }
+                },
+                enabled = focus
             )
         }
     }
@@ -271,6 +295,7 @@ fun Repeats(
 @Composable
 fun IntervalList(
     modifier: Modifier = Modifier,
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
     state: AppState,
     viewModel: SyncFitViewModel,
@@ -294,11 +319,14 @@ fun IntervalList(
 
     Text(text = annotatedString)
     LazyColumn(
-        modifier = Modifier.height(210.dp),
+        modifier = Modifier
+            .height(210.dp)
+            .focusProperties { canFocus = focus },
     ) {
         if (intervals.isEmpty()) {
             item {
                 DefaultIntervalCard(
+                    focus = focus,
                     onEvent = onEvent,
                     state = state,
                     addInterval = { onEvent(TimerEvents.AddTimerInterval(it)) },
@@ -307,6 +335,7 @@ fun IntervalList(
         } else {
             itemsIndexed(intervals) { index, interval ->
                 IntervalCard(
+                    focus = focus,
                     onEvent = onEvent,
                     state = state,
                     interval = interval,
@@ -315,6 +344,7 @@ fun IntervalList(
 
                 if (index == intervals.size - 1) {
                     DefaultIntervalCard(
+                        focus = focus,
                         onEvent = onEvent,
                         state = state,
                         addInterval = {
@@ -332,6 +362,7 @@ fun IntervalList(
 @Composable
 fun DefaultIntervalCard(
     modifier: Modifier = Modifier,
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
     state: AppState,
     addInterval: (Interval) -> Unit,
@@ -356,7 +387,8 @@ fun DefaultIntervalCard(
     }
 
     ListItem(
-        modifier = modifier
+        modifier = Modifier
+            .focusProperties { canFocus = focus }
             .clip(RoundedCornerShape(10.dp))
             .border(
                 width = 1.dp,
@@ -365,6 +397,7 @@ fun DefaultIntervalCard(
             ),
         leadingContent = {
             IconButton(
+                enabled = focus,
                 onClick = {
                     if (intervalName.isNotEmpty() && intervalTime.isNotEmpty()) {
                         isIntervalValid = true
@@ -377,7 +410,7 @@ fun DefaultIntervalCard(
                     } else {
                         isIntervalValid = false
                     }
-                }
+                },
             ) {
                 Icon(
                     imageVector = Icons.Default.AddCircle,
@@ -390,22 +423,21 @@ fun DefaultIntervalCard(
         },
         headlineContent = {
             CustomNoPaddingTextField(
+                enabled = focus,
                 placeholder = { Text(text = "Name") },
                 value = intervalName,
                 onValueChange = { intervalName = it },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-                    unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
                     focusedPlaceholderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.primary,
                 ),
             )
         },
         trailingContent = {
             Text(
                 modifier = Modifier
+                    .focusProperties { canFocus = focus }
                     .clickable { showTimePicker = true },
                 text = intervalTime,
             )
@@ -420,6 +452,7 @@ fun DefaultIntervalCard(
 @Composable
 fun IntervalCard(
     modifier: Modifier = Modifier,
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
     state: AppState,
     interval: Interval,
@@ -433,7 +466,8 @@ fun IntervalCard(
             .clip(RoundedCornerShape(10.dp)),
         leadingContent = {
             IconButton(
-                onClick = { deleteInterval(interval) }
+                onClick = { deleteInterval(interval) },
+                enabled = focus,
             ) {
                 Icon(
                     imageVector = Icons.Default.DoNotDisturbOn,
@@ -451,6 +485,7 @@ fun IntervalCard(
 
 @Composable
 fun Intensity(
+    focus: Boolean = true,
     state: AppState,
     onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
@@ -495,6 +530,7 @@ fun Intensity(
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Intensity.LOW.name)
         }
@@ -512,6 +548,7 @@ fun Intensity(
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Intensity.HIGH.name)
         }
@@ -520,6 +557,7 @@ fun Intensity(
 
 @Composable
 fun Environment(
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
     environment: Environment,
@@ -563,6 +601,7 @@ fun Environment(
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.INDOOR.name)
         }
@@ -580,6 +619,7 @@ fun Environment(
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.OUTDOOR.name)
         }
@@ -597,6 +637,7 @@ fun Environment(
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.BOTH.name)
         }

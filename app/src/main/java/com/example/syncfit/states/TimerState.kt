@@ -5,7 +5,7 @@ import com.example.syncfit.database.entities.UserWithTimers
 
 data class TimerState(
     val timer: Timer = Timer(),
-    val timers: List<UserWithTimers> = emptyList(),
+    val timers: List<Timer> = emptyList(),
     val isTimerRunning: Boolean = false,
     val isTimerCreateSuccessful: Boolean = false,
     val timerError: String? = null,

@@ -21,11 +21,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -42,6 +44,7 @@ import com.example.syncfit.composables.screens.IntervalList
 import com.example.syncfit.composables.screens.Repeats
 import com.example.syncfit.composables.screens.TimerName
 import com.example.syncfit.events.AppEvents
+import com.example.syncfit.events.TimerEvents
 import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
@@ -56,7 +59,7 @@ fun TimerDetailsScreen(
     var edit by remember { mutableStateOf(false) }
 
     val data by viewModel.state.collectAsState()
-    val timer = data.timerState.timer.copy(
+    var timer = data.timerState.timer.copy(
         timerName = data.timerState.timer.timerName,
         timerIntervals = data.timerState.timer.timerIntervals,
         timerRepeats = data.timerState.timer.timerRepeats,
@@ -64,13 +67,31 @@ fun TimerDetailsScreen(
         timerEnvironment = data.timerState.timer.timerEnvironment,
     )
 
+    var timerName by remember { mutableStateOf(timer.timerName) }
+    var timerRepeats by remember { mutableIntStateOf(timer.timerRepeats) }
+    var timerIntensity by remember { mutableStateOf(timer.timerIntensity) }
+    var timerEnvironment by remember { mutableStateOf(timer.timerEnvironment) }
+
     Scaffold(
         topBar = {
             CustomTopAppBar(
                 title = "Details",
                 iconButtons = {
                     IconButton(
-                        onClick = { edit = !edit },
+                        onClick = {
+                            edit = !edit
+                            if (!edit) {
+                                println(data.timerState.timer.timerIntervals)
+                                timer = timer.copy(
+                                    timerName = timerName,
+                                    timerRepeats = timerRepeats,
+                                    timerIntensity = timerIntensity,
+                                    timerEnvironment = timerEnvironment,
+                                )
+
+                                onEvent(TimerEvents.UpdateTimer(timer, "details"))
+                            }
+                        },
                     ) {
                         Icon(
                             imageVector = if (edit) Icons.Filled.Save else Icons.Filled.ModeEdit,
@@ -88,7 +109,10 @@ fun TimerDetailsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { navController.navigate(ScreenConstants.Route.Timers.HOME) },
+                        onClick = {
+                            onEvent(TimerEvents.DeleteTimer(timer))
+                            navController.navigate(ScreenConstants.Route.Timers.HOME)
+                        },
                         modifier = Modifier.padding(end = Dimensions.Spacing.medium),
                     ) {
                         Icon(
@@ -111,11 +135,12 @@ fun TimerDetailsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 TimerName(
+                    focus = edit,
                     state = state,
                     onEvent = onEvent,
                     viewModel = viewModel,
-                    name = timer.timerName,
-                    nameChange = { timer.timerName = it },
+                    name = timerName,
+                    nameChange = { timerName = it },
                 )
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -124,6 +149,7 @@ fun TimerDetailsScreen(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     IntervalList(
+                        focus = edit,
                         state = state,
                         onEvent = onEvent,
                         viewModel = viewModel,
@@ -137,11 +163,12 @@ fun TimerDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Repeats(
+                        focus = edit,
                         onEvent = onEvent,
                         state = state,
                         viewModel = viewModel,
-                        repeats = timer.timerRepeats,
-                        repeatsChange = { timer.timerRepeats = it },
+                        repeats = timerRepeats,
+                        repeatsChange = { timerRepeats = it },
                     )
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
@@ -152,10 +179,11 @@ fun TimerDetailsScreen(
                 ) {
                     Intensity(
                         state = state,
+                        focus = edit,
                         onEvent = onEvent,
                         viewModel = viewModel,
-                        intensity = timer.timerIntensity,
-                        intensityChange = { timer.timerIntensity = it },
+                        intensity = timerIntensity,
+                        intensityChange = { timerIntensity = it },
                     )
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
@@ -165,10 +193,11 @@ fun TimerDetailsScreen(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     Environment(
+                        focus = edit,
                         onEvent = onEvent,
                         viewModel = viewModel,
-                        environment = timer.timerEnvironment,
-                        environmentChange = { timer.timerEnvironment = it },
+                        environment = timerEnvironment,
+                        environmentChange = { timerEnvironment = it },
                     )
                 }
             }
