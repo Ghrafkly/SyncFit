@@ -29,24 +29,19 @@ import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.CustomTopAppBar
-import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.database.models.TimerState
-import com.example.syncfit.events.AppEvents
-import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimerRunScreen(
-    state : AppState,
-    onEvent: (AppEvents) -> Unit,
     navController: NavController,
     viewModel: SyncFitViewModel,
 ) {
     val timerState = remember { mutableStateOf(TimerState.STOPPED) }
 
     val data by viewModel.state.collectAsState()
-    var timer = data.timerState.timer.copy(
+    val timer = data.timerState.timer.copy(
         timerName = data.timerState.timer.timerName,
         timerIntervals = data.timerState.timer.timerIntervals,
         timerRepeats = data.timerState.timer.timerRepeats,

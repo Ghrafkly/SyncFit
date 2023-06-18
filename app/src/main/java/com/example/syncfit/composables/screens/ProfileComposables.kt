@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,7 +31,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.CustomDivider
-import com.example.syncfit.events.AppEvents
 import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
 import kotlinx.coroutines.Job
@@ -68,8 +66,6 @@ fun ProfileImage() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileActions(
-    modifier: Modifier = Modifier,
-    onEvent: (AppEvents) -> Unit,
     navController: NavController,
     clickGoogleSignOut: () -> Job,
 ) {

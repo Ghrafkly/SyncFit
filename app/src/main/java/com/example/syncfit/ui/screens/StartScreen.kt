@@ -16,13 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.LogoWithText
 import com.example.syncfit.composables.screens.StartActions
-import com.example.syncfit.events.AppEvents
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StartScreen(
     modifier: Modifier = Modifier,
-    onEvent: (AppEvents) -> Unit,
     navController: NavController,
 ) {
     Scaffold(

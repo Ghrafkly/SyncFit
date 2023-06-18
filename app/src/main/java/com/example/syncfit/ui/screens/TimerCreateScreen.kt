@@ -1,7 +1,5 @@
 package com.example.syncfit.ui.screens
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,9 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -36,7 +32,6 @@ import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomDivider
 import com.example.syncfit.composables.custom.CustomNavBar
 import com.example.syncfit.composables.custom.CustomTopAppBar
-import com.example.syncfit.composables.custom.MainTopAppBar
 import com.example.syncfit.composables.screens.Environment
 import com.example.syncfit.composables.screens.Intensity
 import com.example.syncfit.composables.screens.IntervalList
@@ -48,7 +43,6 @@ import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.TimerEvents
 import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -133,8 +127,6 @@ fun TimerCreateScreen(
             ) {
                 TimerName(
                     state = state,
-                    onEvent = onEvent,
-                    viewModel = viewModel,
                     name = timerName,
                     nameChange = { timerName = it },
                 )
@@ -145,7 +137,6 @@ fun TimerCreateScreen(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     IntervalList(
-                        state = state,
                         onEvent = onEvent,
                         viewModel = viewModel,
                     )
@@ -158,8 +149,6 @@ fun TimerCreateScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Repeats(
-                        onEvent = onEvent,
-                        state = state,
                         viewModel = viewModel,
                         repeats = timerRepeats,
                         repeatsChange = { timerRepeats = it },
@@ -172,7 +161,6 @@ fun TimerCreateScreen(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     Intensity(
-                        state = state, onEvent = onEvent,
                         viewModel = viewModel,
                         intensity = timerIntensity,
                         intensityChange = { timerIntensity = it },
@@ -185,7 +173,6 @@ fun TimerCreateScreen(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     Environment(
-                        onEvent = onEvent,
                         viewModel = viewModel,
                         environment = timerEnvironment,
                         environmentChange = { timerEnvironment = it },

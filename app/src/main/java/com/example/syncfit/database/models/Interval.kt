@@ -1,8 +1,6 @@
 package com.example.syncfit.database.models
 
 import kotlinx.serialization.Serializable
-import java.time.LocalTime
-import java.util.concurrent.TimeUnit
 
 @Serializable
 data class Interval(

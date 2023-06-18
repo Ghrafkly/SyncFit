@@ -1,6 +1,5 @@
 package com.example.syncfit.composables.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,10 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.syncfit.events.AppEvents
-import com.example.syncfit.events.ClickEvents
 import com.example.syncfit.ui.screens.ScreenConstants
-import com.example.syncfit.ui.theme.Dimensions.*
+import com.example.syncfit.ui.theme.Dimensions.ButtonHeight
+import com.example.syncfit.ui.theme.Dimensions.ButtonWidth
+import com.example.syncfit.ui.theme.Dimensions.Spacing
 
 @Composable
 fun StartActions(

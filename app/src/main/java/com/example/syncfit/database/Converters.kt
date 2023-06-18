@@ -1,7 +1,6 @@
 package com.example.syncfit.database
 
 import androidx.room.TypeConverter
-import com.example.syncfit.database.models.Duration
 import com.example.syncfit.database.models.Interval
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json

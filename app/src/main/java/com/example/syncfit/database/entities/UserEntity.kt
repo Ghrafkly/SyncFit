@@ -61,10 +61,10 @@ data class User(
 }
 
 data class UserWithTimers(
-    @Embedded val user: User,
+    @Embedded val user: User?,
     @Relation(
         parentColumn = "email",
         entityColumn = "userId",
     )
-    val timers: List<Timer>,
+    val timers: List<Timer>?,
 )

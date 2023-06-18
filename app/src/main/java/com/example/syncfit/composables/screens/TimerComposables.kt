@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
@@ -26,9 +25,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DismissState
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,31 +34,32 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.custom.CustomNoPaddingTextField
 import com.example.syncfit.composables.custom.CustomOutlinedTextField
 import com.example.syncfit.composables.custom.CustomTimePicker
+import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
 import com.example.syncfit.database.models.Interval
@@ -72,17 +70,7 @@ import com.example.syncfit.states.AppState
 import com.example.syncfit.toTimeStamp
 import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import com.example.syncfit.SyncFitViewModel
-import com.example.syncfit.database.entities.Timer
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerCard(
     modifier: Modifier = Modifier,
@@ -136,8 +124,6 @@ fun TimerCard(
 
 @Composable
 fun TimersViewActions(
-    modifier: Modifier = Modifier,
-    onEvent: (AppEvents) -> Unit,
     onCreateNavigateTo: () -> Unit,
 ) {
     Row(
@@ -167,8 +153,6 @@ fun TimerName(
     modifier: Modifier = Modifier,
     focus: Boolean = true,
     state: AppState,
-    onEvent: (AppEvents) -> Unit,
-    viewModel: SyncFitViewModel,
     name: String,
     nameChange: (String) -> Unit,
 ) {
@@ -215,9 +199,7 @@ fun TimerName(
 fun Repeats(
     modifier: Modifier = Modifier,
     focus: Boolean = true,
-    onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
-    state: AppState,
     repeats: Int,
     repeatsChange: (Int) -> Unit,
 ) {
@@ -294,10 +276,8 @@ fun Repeats(
 
 @Composable
 fun IntervalList(
-    modifier: Modifier = Modifier,
     focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
-    state: AppState,
     viewModel: SyncFitViewModel,
 ) {
     val data by viewModel.state.collectAsState()
@@ -327,8 +307,6 @@ fun IntervalList(
             item {
                 DefaultIntervalCard(
                     focus = focus,
-                    onEvent = onEvent,
-                    state = state,
                     addInterval = { onEvent(TimerEvents.AddTimerInterval(it)) },
                 )
             }
@@ -336,8 +314,6 @@ fun IntervalList(
             itemsIndexed(intervals) { index, interval ->
                 IntervalCard(
                     focus = focus,
-                    onEvent = onEvent,
-                    state = state,
                     interval = interval,
                     deleteInterval = { onEvent(TimerEvents.DeleteTimerInterval(it)) },
                 )
@@ -345,8 +321,6 @@ fun IntervalList(
                 if (index == intervals.size - 1) {
                     DefaultIntervalCard(
                         focus = focus,
-                        onEvent = onEvent,
-                        state = state,
                         addInterval = {
                             println("Adding interval: $it")
                             onEvent(TimerEvents.AddTimerInterval(it))
@@ -361,10 +335,7 @@ fun IntervalList(
 
 @Composable
 fun DefaultIntervalCard(
-    modifier: Modifier = Modifier,
     focus: Boolean = true,
-    onEvent: (AppEvents) -> Unit,
-    state: AppState,
     addInterval: (Interval) -> Unit,
 ) {
     var intervalName by remember { mutableStateOf("") }
@@ -381,8 +352,6 @@ fun DefaultIntervalCard(
             modifier = Modifier
                 .fillMaxWidth(0.7f)
                 .height(300.dp),
-            onEvent = onEvent,
-            state = state,
         )
     }
 
@@ -454,8 +423,6 @@ fun DefaultIntervalCard(
 fun IntervalCard(
     modifier: Modifier = Modifier,
     focus: Boolean = true,
-    onEvent: (AppEvents) -> Unit,
-    state: AppState,
     interval: Interval,
     deleteInterval: (Interval) -> Unit,
 ) {
@@ -492,8 +459,6 @@ fun IntervalCard(
 @Composable
 fun Intensity(
     focus: Boolean = true,
-    state: AppState,
-    onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
     intensity: Intensity,
     intensityChange: (Intensity) -> Unit,
@@ -564,7 +529,6 @@ fun Intensity(
 @Composable
 fun Environment(
     focus: Boolean = true,
-    onEvent: (AppEvents) -> Unit,
     viewModel: SyncFitViewModel,
     environment: Environment,
     environmentChange: (Environment) -> Unit,

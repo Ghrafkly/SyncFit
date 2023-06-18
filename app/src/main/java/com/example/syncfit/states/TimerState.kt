@@ -1,7 +1,6 @@
 package com.example.syncfit.states
 
 import com.example.syncfit.database.entities.Timer
-import com.example.syncfit.database.entities.UserWithTimers
 
 data class TimerState(
     val timer: Timer = Timer(),

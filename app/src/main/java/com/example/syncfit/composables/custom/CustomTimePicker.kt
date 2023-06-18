@@ -1,9 +1,7 @@
 package com.example.syncfit.composables.custom
 
-import androidx.activity.result.IntentSenderRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,30 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.core.text.isDigitsOnly
-import com.example.syncfit.events.AppEvents
-import com.example.syncfit.fromTimeStamp
-import com.example.syncfit.states.AppState
 
 @Composable
 fun CustomTimePicker(
     modifier: Modifier = Modifier,
-    onEvent: (AppEvents) -> Unit = {},
-    state: AppState = AppState(),
     onDismissRequest: () -> Unit = {},
     onConfirm: (String) -> Unit = {},
 ) {
-    val time = state.timerState.timer.timerTimeStamp.fromTimeStamp()
-    val timeParts = time.split(":")
-
-    val minutes = timeParts[1]
-    val seconds = timeParts[2]
-
     var minuteInput by remember { mutableStateOf("") }
     var secondInput by remember { mutableStateOf("") }
 

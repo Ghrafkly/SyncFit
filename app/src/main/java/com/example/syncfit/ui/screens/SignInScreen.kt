@@ -17,14 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.composables.screens.SignInFlavourText
 import com.example.syncfit.composables.screens.SignInTextFields
 import com.example.syncfit.composables.screens.SignInTopAppBar
 import com.example.syncfit.events.AppEvents
-import com.example.syncfit.events.AuthEvents
 import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.theme.Dimensions
 

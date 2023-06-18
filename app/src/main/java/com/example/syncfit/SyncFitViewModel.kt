@@ -1,44 +1,32 @@
 package com.example.syncfit
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.toMutableStateList
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.syncfit.authentication.GoogleAuthClient
 import com.example.syncfit.database.daos.TimerDao
 import com.example.syncfit.database.daos.UserDao
 import com.example.syncfit.database.entities.Timer
 import com.example.syncfit.database.entities.User
-import com.example.syncfit.database.entities.UserWithTimers
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
 import com.example.syncfit.database.models.Interval
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
-import com.example.syncfit.events.ClickEvents
 import com.example.syncfit.events.TimerEvents
 import com.example.syncfit.events.UserEvents
 import com.example.syncfit.states.AppState
 import com.example.syncfit.states.TimerState
 import com.example.syncfit.states.UserState
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import kotlin.math.sign
 
 class SyncFitViewModel(
     private val userDao: UserDao,
@@ -86,11 +74,15 @@ class SyncFitViewModel(
 
     private fun timersList() {
         viewModelScope.launch {
-            timerDao.getTimersByUser(state.value.userState.user.email).collect { timers ->
-                if (timers.timers.isNotEmpty()) _timerState.update {
-                    it.copy(
-                        timers = timers.timers,
-                    )
+            timerDao.getTimersByUser(state.value.userState.user.email)?.collect { timers ->
+                if (timers != null) {
+                    if (timers.timers != null) {
+                        _timerState.update {
+                            it.copy(
+                                timers = timers.timers,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -229,7 +221,7 @@ class SyncFitViewModel(
                     )
                 }
                 userDao.upsertUser(user)
-
+                timersList()
             } else {
                 _userState.update {
                     it.copy(
@@ -239,9 +231,8 @@ class SyncFitViewModel(
                     )
                 }
                 userDao.upsertUser(dbUser)
+                timersList()
             }
-
-            timersList()
         }
     }
 
@@ -329,6 +320,13 @@ class SyncFitViewModel(
         }
     }
 
+    private fun deleteAllTimers() {
+        viewModelScope.launch {
+            timerDao.deleteAllTimers(state.value.userState.user.email)
+            timersList()
+        }
+    }
+
     private fun authEvent(event: AuthEvents) {
         when (event) {
             is AuthEvents.GoogleSignIn -> googleSignIn(event.user)
@@ -360,6 +358,7 @@ class SyncFitViewModel(
             is TimerEvents.DeleteTimerInterval -> deleteTimerInterval(event.interval)
             is TimerEvents.UpdateTimerIntervals -> updateTimerIntervals()
             is TimerEvents.GetTimer -> getTimer(event.timerId)
+            is TimerEvents.DeleteAllTimers -> deleteAllTimers()
         }
     }
 

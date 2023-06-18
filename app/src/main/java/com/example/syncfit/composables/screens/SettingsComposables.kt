@@ -19,16 +19,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.syncfit.SyncFitViewModel
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.TimerEvents
 import com.example.syncfit.events.UserEvents
 import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
-import kotlinx.coroutines.flow.collect
 
 @Composable
 fun SettingsActions() {
@@ -54,7 +51,7 @@ fun DeleteActions(
     navController: NavController,
 ) {
     Button(
-        onClick = { /*onEvent(TimerEvents.DeleteTimers)*/ },
+        onClick = { onEvent(TimerEvents.DeleteAllTimers) },
         modifier = Modifier.width(Dimensions.ButtonWidth.medium),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondary,

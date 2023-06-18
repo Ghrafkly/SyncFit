@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.syncfit.database.models.Duration
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
 import com.example.syncfit.database.models.Interval

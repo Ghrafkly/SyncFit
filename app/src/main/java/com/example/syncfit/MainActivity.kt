@@ -9,24 +9,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -34,10 +24,7 @@ import androidx.navigation.navigation
 import androidx.room.Room
 import com.example.syncfit.authentication.GoogleAuthClient
 import com.example.syncfit.database.SyncFitDatabase
-import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.AuthEvents
-import com.example.syncfit.events.UserEvents
-import com.example.syncfit.states.AppState
 import com.example.syncfit.ui.screens.CreateAccountScreen
 import com.example.syncfit.ui.screens.ProfileDetailsScreen
 import com.example.syncfit.ui.screens.ProfileScreen
@@ -51,7 +38,6 @@ import com.example.syncfit.ui.screens.TimerRunScreen
 import com.example.syncfit.ui.screens.TimersViewScreen
 import com.example.syncfit.ui.theme.SyncFitTheme
 import com.google.android.gms.auth.api.identity.Identity
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -179,7 +165,6 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(ScreenConstants.Route.START) {
                             StartScreen(
-                                onEvent = viewModel::onEvent,
                                 navController = navController,
                             )
                         }
@@ -206,7 +191,6 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(ScreenConstants.Route.Timers.HOME) {
                             TimersViewScreen(
-                                state = state,
                                 onEvent = viewModel::onEvent,
                                 navController = navController,
                                 viewModel = viewModel,
@@ -230,8 +214,6 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(ScreenConstants.Route.Timers.RUN) {
                             TimerRunScreen(
-                                state = state,
-                                onEvent = viewModel::onEvent,
                                 navController = navController,
                                 viewModel = viewModel,
                             )
@@ -239,7 +221,6 @@ class MainActivity : ComponentActivity() {
                         composable(ScreenConstants.Route.Profile.HOME) {
                             ProfileScreen(
                                 state = state,
-                                onEvent = viewModel::onEvent,
                                 navController = navController,
                                 clickGoogleSignOut = { clickGoogleSignOut() }
                             )

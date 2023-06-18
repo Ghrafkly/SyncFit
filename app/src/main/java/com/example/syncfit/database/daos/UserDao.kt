@@ -1,6 +1,5 @@
 package com.example.syncfit.database.daos
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -9,7 +8,6 @@ import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Upsert
 import com.example.syncfit.database.entities.User
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
