@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,19 +54,31 @@ import kotlinx.coroutines.delay
 fun TimerCreateScreen(
     state : AppState,
     onEvent: (AppEvents) -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: SyncFitViewModel,
 ) {
     val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(key1 = state.timerState.isTimerCreateSuccessful) {
-        Log.d("TimerCreateScreen", "Timer Error: ${state.timerState.timerError}")
-        if (!state.timerState.isTimerCreateSuccessful && !state.timerState.timerError.isNullOrEmpty()) {
-            Toast.makeText(
-                navController.context,
-                state.timerState.timerError.toString(),
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+    val data by viewModel.state.collectAsState()
+    val timer = data.timerState.timer
+
+    var timerName by remember { mutableStateOf(timer.timerName) }
+    var timerIntervals by remember { mutableStateOf(timer.timerIntervals) }
+    var timerRepeats by remember { mutableIntStateOf(timer.timerRepeats) }
+    var timerIntensity by remember { mutableStateOf(timer.timerIntensity) }
+    var timerEnvironment by remember { mutableStateOf(timer.timerEnvironment) }
+
+    println(timer)
+
+    var firstEntry by remember { mutableStateOf(true) }
+    if (firstEntry) {
+        data.timerState.isTimerNameValid = true
+        data.timerState.isTimerIntervalsValid = true
+        data.timerState.isTimerRepeatsValid = true
+        data.timerState.isTimerIntensityValid = true
+        data.timerState.isTimerEnvironmentValid = true
+        data.timerState.timer.timerIntervals = mutableListOf()
+        firstEntry = false
     }
 
     Scaffold(
@@ -83,7 +96,19 @@ fun TimerCreateScreen(
                 iconButtons = {
                     IconButton(
                         onClick = {
-                            onEvent(TimerEvents.UpdateTimer)
+                            onEvent(TimerEvents.UpdateTimer(
+                                Timer(
+                                    userId = data.userState.user.email,
+                                    timerName = timerName,
+                                    timerIntervals = timerIntervals,
+                                    timerTimeStamp = timer.timerTimeStamp,
+                                    timerRepeats = timerRepeats,
+                                    timerIntensity = timerIntensity,
+                                    timerEnvironment = timerEnvironment,
+                                    timerDateLastUsed = timer.timerDateLastUsed,
+                                )
+                            ))
+                            
                         },
                         modifier = Modifier.padding(end = Dimensions.Spacing.medium),
                     ) {
@@ -107,7 +132,10 @@ fun TimerCreateScreen(
             ) {
                 TimerName(
                     state = state,
-                    onEvent = onEvent
+                    onEvent = onEvent,
+                    viewModel = viewModel,
+                    name = timerName,
+                    nameChange = { timerName = it },
                 )
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -115,7 +143,11 @@ fun TimerCreateScreen(
                         .fillMaxWidth(0.9f),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    IntervalList()
+                    IntervalList(
+                        state = state,
+                        onEvent = onEvent,
+                        viewModel = viewModel,
+                    )
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Row(
@@ -124,8 +156,13 @@ fun TimerCreateScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = "Repeats")
-                    Repeats(onEvent = onEvent)
+                    Repeats(
+                        onEvent = onEvent,
+                        state = state,
+                        viewModel = viewModel,
+                        repeats = timerRepeats,
+                        repeatsChange = { timerRepeats = it },
+                    )
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -133,7 +170,12 @@ fun TimerCreateScreen(
                         .fillMaxWidth(0.9f),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Intensity(state = state, onEvent = onEvent)
+                    Intensity(
+                        state = state, onEvent = onEvent,
+                        viewModel = viewModel,
+                        intensity = timerIntensity,
+                        intensityChange = { timerIntensity = it },
+                    )
                 }
                 CustomDivider(modifier = Modifier.padding(vertical = Dimensions.Spacing.medium))
                 Column(
@@ -141,7 +183,12 @@ fun TimerCreateScreen(
                         .fillMaxWidth(0.9f),
                     horizontalAlignment = Alignment.Start,
                 ) {
-                    Environment(onEvent = onEvent)
+                    Environment(
+                        onEvent = onEvent,
+                        viewModel = viewModel,
+                        environment = timerEnvironment,
+                        environmentChange = { timerEnvironment = it },
+                    )
                 }
             }
         },

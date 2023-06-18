@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -49,6 +50,9 @@ class SyncFitViewModel(
     private val _timerState = MutableStateFlow(TimerState())
     private val _timer = MutableStateFlow(Timer())
     private val _state = MutableStateFlow(AppState())
+    private val _timerIntervals = MutableStateFlow(_timer.value.timerIntervals)
+
+    val timerIntervals = _timerIntervals.asStateFlow()
 
     val state = combine(_state, _userState, _timerState) { state, userState, timerState ->
         state.copy(
@@ -57,53 +61,62 @@ class SyncFitViewModel(
         )
     }.stateIn(viewModelScope,  SharingStarted.WhileSubscribed(5000), AppState())
 
-    private fun updateTimerName(name: String) {
-        _timer.update { it.copy(timerName = name) }
-        _timerState.update { it.copy(isTimerNameValid = true) }
+    private fun addTimerInterval(interval: Interval) {
+        _timerIntervals.update {
+            it.toMutableStateList().apply {
+                add(interval)
+            }
+        }
+        updateTimerIntervals()
     }
 
-    private fun updateTimerIntervals(intervals: List<Interval>) {
-        _timer.update { it.copy(timerIntervals = intervals) }
+    private fun deleteTimerInterval(interval: Interval) {
+        _timerIntervals.update {
+            it.toMutableStateList().apply {
+                remove(interval)
+            }
+        }
+        updateTimerIntervals()
+    }
+
+    private fun updateTimerIntervals() {
+        _timer.update { it.copy(timerIntervals = _timerIntervals.value) }
         _timerState.update { it.copy(isTimerIntervalsValid = true) }
     }
 
-    private fun updateTimerRepeats(repeats: Int) {
-        _timer.update { it.copy(timerRepeats = repeats) }
-        _timerState.update { it.copy(isTimerRepeatsValid = true) }
-    }
-
-    private fun updateTimerIntensity(intensity: Intensity) {
-        _timer.update { it.copy(timerIntensity = intensity) }
-        _timerState.update { it.copy(isTimerIntensityValid = true) }
-    }
-
-    private fun updateTimerEnvironment(environment: Environment) {
-        _timer.update { it.copy(timerEnvironment = environment) }
-        _timerState.update { it.copy(isTimerEnvironmentValid = true) }
-    }
-
-    private fun updateTimerValidation() {
+    private fun updateTimerValidation(timer: Timer) {
         Log.i("SyncFitViewModel", "----------------------------------------------------")
         Log.i("SyncFitViewModel", "----------------------------------------------------")
-        Log.i("SyncFitViewModel", "Timer Name: ${_timer.value.timerName} : Is Valid: ${_timer.value.timerName.isNotEmpty()}")
-        Log.i("SyncFitViewModel", "Timer Intervals: ${_timer.value.timerIntervals} : Is Valid: ${_timer.value.timerIntervals.isNotEmpty()}")
-        Log.i("SyncFitViewModel", "Timer Repeats: ${_timer.value.timerRepeats} : Is Valid: ${_timer.value.timerRepeats > 0}")
-        Log.i("SyncFitViewModel", "Timer Intensity: ${_timer.value.timerIntensity} : Is Valid: ${_timer.value.timerIntensity != Intensity.NONE}")
-        Log.i("SyncFitViewModel", "Timer Environment: ${_timer.value.timerEnvironment} : Is Valid: ${_timer.value.timerEnvironment != Environment.NONE}")
+        Log.i("SyncFitViewModel", "Timer Name: ${timer.timerName} : Is Valid: ${timer.timerName.isNotEmpty()}")
+        Log.i("SyncFitViewModel", "Timer Intervals: ${_timerIntervals.value} : Is Valid: ${_timerIntervals.value.isNotEmpty()}")
+        Log.i("SyncFitViewModel", "Timer Repeats: ${timer.timerRepeats} : Is Valid: ${timer.timerRepeats > 0}")
+        Log.i("SyncFitViewModel", "Timer Intensity: ${timer.timerIntensity} : Is Valid: ${timer.timerIntensity != Intensity.NONE}")
+        Log.i("SyncFitViewModel", "Timer Environment: ${timer.timerEnvironment} : Is Valid: ${timer.timerEnvironment != Environment.NONE}")
 
         _timerState.update {
             it.copy(
-                isTimerNameValid = _timer.value.timerName.isNotEmpty(),
-                isTimerIntervalsValid = _timer.value.timerIntervals.isNotEmpty(),
-                isTimerRepeatsValid = _timer.value.timerRepeats > 0,
-                isTimerIntensityValid = _timer.value.timerIntensity != Intensity.NONE,
-                isTimerEnvironmentValid = _timer.value.timerEnvironment != Environment.NONE,
+                isTimerNameValid = timer.timerName.isNotEmpty(),
+                isTimerIntervalsValid = _timerIntervals.value.isNotEmpty(),
+                isTimerRepeatsValid = timer.timerRepeats > 0,
+                isTimerIntensityValid = timer.timerIntensity != Intensity.NONE,
+                isTimerEnvironmentValid = timer.timerEnvironment != Environment.NONE,
             )
         }
     }
 
-    private fun updateTimer() {
-        updateTimerValidation()
+    private fun updateTimer(timer: Timer) {
+        updateTimerValidation(timer)
+
+        val updatedTimer = Timer(
+            userId = state.value.userState.user.email,
+            timerName = timer.timerName,
+            timerIntervals = _timerIntervals.value,
+            timerRepeats = timer.timerRepeats,
+            timerTimeStamp = timer.timerTimeStamp,
+            timerIntensity = timer.timerIntensity,
+            timerEnvironment = timer.timerEnvironment,
+            timerDateLastUsed = System.currentTimeMillis(),
+        )
 
         if (_timerState.value.isTimerNameValid &&
             _timerState.value.isTimerIntervalsValid &&
@@ -111,17 +124,6 @@ class SyncFitViewModel(
             _timerState.value.isTimerIntensityValid &&
             _timerState.value.isTimerEnvironmentValid
         ) {
-            val updatedTimer = Timer(
-                userId = state.value.userState.user.email,
-                timerName = _timer.value.timerName,
-                timerIntervals = _timer.value.timerIntervals,
-                timerDuration = _timer.value.timerDuration,
-                timerRepeats = _timer.value.timerRepeats,
-                timerIntensity = _timer.value.timerIntensity,
-                timerEnvironment = _timer.value.timerEnvironment,
-                timerDateLastUsed = System.currentTimeMillis(),
-            )
-
             _timerState.update {
                 it.copy(
                     timer = updatedTimer,
@@ -133,9 +135,20 @@ class SyncFitViewModel(
             viewModelScope.launch {
                 timerDao.upsertTimer(updatedTimer)
             }
+
+            _timerState.update {
+                it.copy(
+                    timer = Timer(),
+                    isTimerCreateSuccessful = false,
+                    timerError = ""
+                )
+            }
+
+            _timerIntervals.update { mutableListOf() }
         } else {
             _timerState.update {
                 it.copy(
+                    timer = updatedTimer,
                     isTimerCreateSuccessful = false,
                     timerError = "Please fix errors"
                 )
@@ -282,19 +295,6 @@ class SyncFitViewModel(
             is UserEvents.GetUserByKey -> TODO()
             is UserEvents.UpdateUser -> updateUser(event.user)
         }
-//        when (event) {
-//            is UserEvents.CreateUser -> viewModelScope.launch { userDao.createUser(event.user) }
-//            is UserEvents.DeleteUser -> viewModelScope.launch {
-//                userDao.deleteUser(event.user)
-//                resetUserState()
-//            }
-//            is UserEvents.UpdateUser -> viewModelScope.launch { userDao.updateUser(event.user) }
-//            is UserEvents.GetUserByKey -> viewModelScope.launch {
-//                userDao.getUserByKey(event.key).collect { user ->
-//                    if (user != null) _userState.update { it.copy(user = user) }
-//                }
-//            }
-//        }
     }
 
     private fun timerEvent(event: TimerEvents) {
@@ -303,31 +303,16 @@ class SyncFitViewModel(
             is TimerEvents.DeleteTimer -> TODO()
             is TimerEvents.GetTimerByKey -> TODO()
             is TimerEvents.GetTimersByUser -> TODO()
-            is TimerEvents.UpdateTimer -> updateTimer()
-            is TimerEvents.UpdateTimerName -> updateTimerName(event.name)
-            is TimerEvents.UpdateTimerIntervals -> updateTimerIntervals(event.intervals)
-            is TimerEvents.UpdateTimerRepeats -> updateTimerRepeats(event.repeats)
-            is TimerEvents.UpdateTimerIntensity -> updateTimerIntensity(event.intensity)
-            is TimerEvents.UpdateTimerEnvironment -> updateTimerEnvironment(event.environment)
+            is TimerEvents.UpdateTimer -> updateTimer(event.timer)
+            is TimerEvents.AddTimerInterval -> addTimerInterval(event.interval)
+            is TimerEvents.DeleteTimerInterval -> deleteTimerInterval(event.interval)
+            is TimerEvents.UpdateTimerIntervals -> updateTimerIntervals()
+            else -> {}
         }
-//        when (event) {
-//            is TimerEvents.CreateTimer -> viewModelScope.launch { timerDao.createTimer(event.timer) }
-//            is TimerEvents.DeleteTimer -> viewModelScope.launch {
-//                timerDao.deleteTimer(event.timer)
-//                resetTimerState()
-//            }
-//            is TimerEvents.UpdateTimer -> viewModelScope.launch { timerDao.updateTimer(event.timer) }
-//            is TimerEvents.GetTimerByKey -> viewModelScope.launch {
-//                timerDao.getTimerByKey(event.timer.timerId).collect { timer ->
-//                    if (timer != null) _timerState.update { it.copy(timer = timer) }
-//                }
-//            }
-//            is TimerEvents.GetTimersByUser -> viewModelScope.launch {
-//                timerDao.getTimersByUser(event.user.email).collect { timers ->
-//                    if (timers.isNotEmpty()) _timerState.update { it.copy(timers = timers) }
-//                }
-//            }
-//        }
+    }
+
+    private fun resetTimer() {
+        _timer.update { Timer() }
     }
 
     private fun resetUserState() {

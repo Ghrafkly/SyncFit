@@ -9,4 +9,10 @@ data class Duration(
     val seconds: Int,
 ) {
     constructor() : this(0, 0, 0)
+
+
+
+    override fun toString(): String {
+        return "${hours}:${minutes}:${seconds}"
+    }
 }

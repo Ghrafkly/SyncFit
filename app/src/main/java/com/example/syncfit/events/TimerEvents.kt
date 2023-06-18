@@ -9,13 +9,12 @@ import com.example.syncfit.database.models.Interval
 sealed interface TimerEvents: AppEvents {
     data class CreateTimer(val timer: Timer): TimerEvents
     data class DeleteTimer(val timer: Timer): TimerEvents
-    object UpdateTimer: TimerEvents
+    data class UpdateTimer(val timer: Timer): TimerEvents
     data class GetTimerByKey(val timer: Timer): TimerEvents
     data class GetTimersByUser(val user: User): TimerEvents
 
     data class UpdateTimerName(val name: String): TimerEvents
-    data class UpdateTimerIntervals(val intervals: List<Interval>): TimerEvents
-    data class UpdateTimerRepeats(val repeats: Int): TimerEvents
-    data class UpdateTimerIntensity(val intensity: Intensity): TimerEvents
-    data class UpdateTimerEnvironment(val environment: Environment): TimerEvents
+    data class AddTimerInterval(val interval: Interval): TimerEvents
+    data class DeleteTimerInterval(val interval: Interval): TimerEvents
+    object UpdateTimerIntervals: TimerEvents
 }

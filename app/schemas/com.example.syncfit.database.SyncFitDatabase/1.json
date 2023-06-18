@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "2b7332e8d03b725a2bc612aa92a84fa7",
+    "identityHash": "07ad05557857a2489ae0d9013749f4d1",
     "entities": [
       {
         "tableName": "users",
@@ -68,7 +68,7 @@
       },
       {
         "tableName": "timers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timerId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` TEXT NOT NULL, `timerName` TEXT NOT NULL, `timerIntervals` TEXT NOT NULL, `timerDuration` TEXT NOT NULL, `timerRepeats` INTEGER NOT NULL, `timerIntensity` TEXT NOT NULL, `timerEnvironment` TEXT NOT NULL, `timerDateCreated` INTEGER NOT NULL, `timerDateLastUsed` INTEGER NOT NULL, `timerTimesUsed` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `users`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timerId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` TEXT NOT NULL, `timerName` TEXT NOT NULL, `timerIntervals` TEXT NOT NULL, `timerTimeStamp` INTEGER NOT NULL, `timerRepeats` INTEGER NOT NULL, `timerIntensity` TEXT NOT NULL, `timerEnvironment` TEXT NOT NULL, `timerDateCreated` INTEGER NOT NULL, `timerDateLastUsed` INTEGER NOT NULL, `timerTimesUsed` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `users`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "timerId",
@@ -95,9 +95,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "timerDuration",
-            "columnName": "timerDuration",
-            "affinity": "TEXT",
+            "fieldPath": "timerTimeStamp",
+            "columnName": "timerTimeStamp",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -173,7 +173,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2b7332e8d03b725a2bc612aa92a84fa7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '07ad05557857a2489ae0d9013749f4d1')"
     ]
   }
 }
