@@ -17,9 +17,12 @@ interface TimerDao {
     @Upsert
     suspend fun upsertTimer(timer: Timer)
 
+    @Delete
+    suspend fun deleteTimer(timer: Timer)
+
     @Transaction
     @Query("SELECT * FROM users WHERE email = :key")
-    fun getTimersByUser(key: String): Flow<List<UserWithTimers>>
+    fun getTimersByUser(key: String): Flow<UserWithTimers>
 
     @Query("SELECT * FROM timers WHERE timerId = :key")
     fun getTimerByKey(key: Int): Flow<Timer>

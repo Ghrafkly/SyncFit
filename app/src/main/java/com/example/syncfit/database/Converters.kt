@@ -8,16 +8,6 @@ import kotlinx.serialization.json.Json
 
 class Converters {
     @TypeConverter
-    fun fromDuration(duration: Duration): String {
-        return Json.encodeToString(Duration.serializer(), duration)
-    }
-
-    @TypeConverter
-    fun toDuration(duration: String): Duration {
-        return Json.decodeFromString(Duration.serializer(), duration)
-    }
-
-    @TypeConverter
     fun fromIntervalList(intervals: List<Interval>): String {
         return Json.encodeToString(ListSerializer(Interval.serializer()), intervals)
     }

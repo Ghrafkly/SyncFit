@@ -1,6 +1,5 @@
 package com.example.syncfit.composables.screens
 
-import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
@@ -25,7 +26,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DismissState
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,8 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,33 +53,57 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.syncfit.composables.custom.CustomNoPaddingTextField
 import com.example.syncfit.composables.custom.CustomOutlinedTextField
+import com.example.syncfit.composables.custom.CustomTimePicker
 import com.example.syncfit.database.models.Environment
 import com.example.syncfit.database.models.Intensity
+import com.example.syncfit.database.models.Interval
 import com.example.syncfit.events.AppEvents
 import com.example.syncfit.events.TimerEvents
+import com.example.syncfit.fromTimeStamp
 import com.example.syncfit.states.AppState
+import com.example.syncfit.toTimeStamp
 import com.example.syncfit.ui.screens.ScreenConstants
 import com.example.syncfit.ui.theme.Dimensions
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import com.example.syncfit.SyncFitViewModel
+import com.example.syncfit.database.entities.Timer
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerCard(
     modifier: Modifier = Modifier,
     onEvent: (AppEvents) -> Unit,
     navController: NavController,
+    timer: Timer,
 ) {
     var favourite by remember { mutableStateOf(false) }
 
     ListItem(
-        modifier = Modifier.clickable { navController.navigate(ScreenConstants.Route.Timers.DETAILS) },
-        headlineContent = { Text("Leg Squats") },
+        modifier = modifier.clickable {
+            onEvent(TimerEvents.GetTimer(timer.timerId))
+            navController.navigate(ScreenConstants.Route.Timers.DETAILS)
+        },
+        headlineContent = { Text(timer.timerName) },
         supportingContent = {
-            Text("1m45s - 3 sets - 10 reps")
+            val duration = timer.timerTimeStamp.fromTimeStamp()
+            val sets = timer.timerIntervals.size
+            val reps = timer.timerRepeats
+
+            Text("$duration - $sets sets - $reps reps")
         },
         leadingContent = {
             IconButton(onClick = { favourite = !favourite }) {
@@ -88,7 +118,10 @@ fun TimerCard(
             }
         },
         trailingContent = {
-            IconButton(onClick = { navController.navigate(ScreenConstants.Route.Timers.RUN) }) {
+            IconButton(onClick = {
+                onEvent(TimerEvents.GetTimer(timer.timerId))
+                navController.navigate(ScreenConstants.Route.Timers.RUN)
+            }) {
                 Icon(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = "Start",
@@ -131,31 +164,35 @@ fun TimersViewActions(
 
 @Composable
 fun TimerName(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
     state: AppState,
     onEvent: (AppEvents) -> Unit,
+    viewModel: SyncFitViewModel,
+    name: String,
+    nameChange: (String) -> Unit,
 ) {
-    var userInput by remember { mutableStateOf("") }
+    var userInput by remember { mutableStateOf(name) }
 
     Box(modifier = Modifier.padding(bottom = 5.dp)) {
         CustomOutlinedTextField(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth(0.9f),
             singleLine = true,
             value = userInput,
             onValueChange = {
                 userInput = it
-                onEvent(TimerEvents.UpdateTimerName(it))
+                println("User input: $userInput | It: $it")
+                nameChange(it)
             },
             label = { Text("Timer Name") }, /* TODO: Get timer name from database */
             trailingIcon = {
-                IconButton(onClick = {
-                    userInput = ""
-                    onEvent(TimerEvents.UpdateTimerName(userInput))
-                }) {
+                IconButton(onClick = { userInput = "" }) {
                     Icon(Icons.Default.Close, contentDescription = "Clear")
                 }
             },
-            isError = !state.timerState.isTimerNameValid
+            isError = !state.timerState.isTimerNameValid,
+            enabled = focus,
         )
         if (!state.timerState.isTimerNameValid) {
             Text(
@@ -165,7 +202,7 @@ fun TimerName(
                     fontSize = 12.sp
                 ),
                 modifier = Modifier
-                    .padding(top = 45.dp)
+                    .padding(top = 40.dp)
                     .align(Alignment.BottomStart)
                     .offset { IntOffset(0, 40) },
             )
@@ -176,146 +213,304 @@ fun TimerName(
 
 @Composable
 fun Repeats(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
+    viewModel: SyncFitViewModel,
+    state: AppState,
+    repeats: Int,
+    repeatsChange: (Int) -> Unit,
 ) {
-    var counter by remember { mutableIntStateOf(0) }
+    val data by viewModel.state.collectAsState()
+    val validRepeat = data.timerState.isTimerRepeatsValid
+//
+    var counter by remember { mutableIntStateOf(repeats) }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = counter.toString(),
-            modifier = Modifier
-        )
-        Spacer(modifier = Modifier.width(Dimensions.Spacing.small))
-        IconButton(
-            onClick = {
-                if (counter > 0) counter--
-                onEvent(TimerEvents.UpdateTimerRepeats(counter))
-            },
-            modifier = Modifier
-                .width(40.dp)
-                .size(27.dp),
-            content = {
-                Icon(
-                    Icons.Default.Remove,
-                    contentDescription = "Reduce"
+    val annotatedString = buildAnnotatedString {
+        append("Repeats")
+        if (!validRepeat) {
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.error,
                 )
+            ) {
+                append(" 1 or more")
             }
-        )
-        IconButton(
-            onClick = {
-                counter++
-                onEvent(TimerEvents.UpdateTimerRepeats(counter))
-            },
-            modifier = Modifier
-                .width(40.dp)
-                .size(27.dp),
-            content = {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Increase"
-                )
-            }
-        )
-    }
-}
-
-@Composable
-fun IntervalList(/* TODO: Pass in intervals */) {
-    Text(text = "Intervals")
-    LazyColumn(
-        modifier = Modifier.height(210.dp),
-    ) {
-        val intervals = listOf(true, true, false) // TODO: Replace with actual data
-        items(intervals.size) { index ->
-            IntervalCard(intervals[index])
         }
     }
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            modifier = modifier.weight(2f),
+            text = annotatedString
+        )
+        Row(
+            modifier = modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = counter.toString(),
+                modifier = modifier
+            )
+            Spacer(modifier = modifier.width(Dimensions.Spacing.small))
+            IconButton(
+                onClick = {
+                    if (counter > 0) counter--
+                    repeatsChange(counter)
+                },
+                modifier = modifier
+                    .width(40.dp)
+                    .size(27.dp),
+                content = {
+                    Icon(
+                        Icons.Default.Remove,
+                        contentDescription = "Reduce"
+                    )
+                },
+                enabled = focus
+            )
+            IconButton(
+                onClick = {
+                    counter++
+                    repeatsChange(counter)
+                },
+                modifier = modifier
+                    .width(40.dp)
+                    .size(27.dp),
+                content = {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Increase"
+                    )
+                },
+                enabled = focus
+            )
+        }
+    }
+
 }
 
 @Composable
-fun IntervalCard(remove: Boolean) {
-    var nameUserInput by remember { mutableStateOf("") }
-    var timeUserInput by remember { mutableStateOf("") }
+fun IntervalList(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
+    onEvent: (AppEvents) -> Unit,
+    state: AppState,
+    viewModel: SyncFitViewModel,
+) {
+    val data by viewModel.state.collectAsState()
+    val emptyInterval = data.timerState.isTimerIntervalsValid
+    val intervals by viewModel.timerIntervals.collectAsState()
 
-    val icon = if (remove) Icons.Default.DoNotDisturbOn else Icons.Default.AddCircle
-    val tint = if (remove) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-    val background = if (!remove) MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f) else Color.Transparent
+    val annotatedString = buildAnnotatedString {
+        append("Intervals")
+        if (!emptyInterval) {
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.error,
+                )
+            ) {
+                append(" Add Interval")
+            }
+        }
+    }
+
+    Text(text = annotatedString)
+    LazyColumn(
+        modifier = Modifier
+            .height(210.dp)
+            .focusProperties { canFocus = focus },
+    ) {
+        if (intervals.isEmpty()) {
+            item {
+                DefaultIntervalCard(
+                    focus = focus,
+                    onEvent = onEvent,
+                    state = state,
+                    addInterval = { onEvent(TimerEvents.AddTimerInterval(it)) },
+                )
+            }
+        } else {
+            itemsIndexed(intervals) { index, interval ->
+                IntervalCard(
+                    focus = focus,
+                    onEvent = onEvent,
+                    state = state,
+                    interval = interval,
+                    deleteInterval = { onEvent(TimerEvents.DeleteTimerInterval(it)) },
+                )
+
+                if (index == intervals.size - 1) {
+                    DefaultIntervalCard(
+                        focus = focus,
+                        onEvent = onEvent,
+                        state = state,
+                        addInterval = {
+                            println("Adding interval: $it")
+                            onEvent(TimerEvents.AddTimerInterval(it))
+                          },
+                    )
+                }
+            }
+        }
+
+    }
+}
+
+@Composable
+fun DefaultIntervalCard(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
+    onEvent: (AppEvents) -> Unit,
+    state: AppState,
+    addInterval: (Interval) -> Unit,
+) {
+    var intervalName by remember { mutableStateOf("") }
+    var intervalTime by remember { mutableStateOf("00:00") }
+
+    var isIntervalValid by remember { mutableStateOf(true) }
+
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    if (showTimePicker) {
+        CustomTimePicker(
+            onDismissRequest = { showTimePicker = false },
+            onConfirm = { intervalTime = it },
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(300.dp),
+            onEvent = onEvent,
+            state = state,
+        )
+    }
 
     ListItem(
+        modifier = Modifier
+            .focusProperties { canFocus = focus }
+            .clip(RoundedCornerShape(10.dp))
+            .border(
+                width = 1.dp,
+                color = if (!isIntervalValid) MaterialTheme.colorScheme.error else Color.Unspecified,
+                shape = RoundedCornerShape(10.dp)
+            ),
         leadingContent = {
             IconButton(
-                onClick = { /*TODO: Link to timer runner screen*/ }
+                enabled = focus,
+                onClick = {
+                    if (intervalName.isNotEmpty() && intervalTime.isNotEmpty()) {
+                        isIntervalValid = true
+                        addInterval(
+                            Interval(
+                                intervalName = intervalName,
+                                intervalTimeStamp = intervalTime.toTimeStamp(),
+                            )
+                        )
+                    } else {
+                        isIntervalValid = false
+                    }
+                },
             ) {
                 Icon(
-                    imageVector = icon,
-                    tint = tint,
-                    contentDescription = "Start Timer",
+                    imageVector = Icons.Default.AddCircle,
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = "Add Timer",
                     modifier = Modifier
                         .size(30.dp)
                 )
             }
         },
         headlineContent = {
-            if (!remove) {
-                CustomNoPaddingTextField(
-                    placeholder = { Text(text = "Name") },
-                    value = nameUserInput,
-                    onValueChange = { nameUserInput = it },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedPlaceholderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.primary,
-                    ),
-                )
-            } else {
-                Text(text = "Running")
-            }
+            CustomNoPaddingTextField(
+                enabled = focus,
+                placeholder = { Text(text = "Name") },
+                value = intervalName,
+                onValueChange = { intervalName = it },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                    focusedIndicatorColor = Color.Transparent,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.primary,
+                ),
+            )
         },
         trailingContent = {
-            if (!remove) {
-                TextField(
-                    placeholder = { Text(text = "00:00") },
-                    value = timeUserInput,
-                    onValueChange = { timeUserInput = it },
+            Text(
+                modifier = Modifier
+                    .focusProperties { canFocus = focus }
+                    .clickable { showTimePicker = true },
+                text = intervalTime,
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+        ),
+
+    )
+}
+
+@Composable
+fun IntervalCard(
+    modifier: Modifier = Modifier,
+    focus: Boolean = true,
+    onEvent: (AppEvents) -> Unit,
+    state: AppState,
+    interval: Interval,
+    deleteInterval: (Interval) -> Unit,
+) {
+    val intervalName = interval.intervalName
+    val intervalTime = interval.intervalTimeStamp.fromTimeStamp()
+
+    ListItem(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp)),
+        leadingContent = {
+            IconButton(
+                onClick = { deleteInterval(interval) },
+                enabled = focus,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DoNotDisturbOn,
+                    tint = MaterialTheme.colorScheme.error,
+                    contentDescription = "Delete Interval",
                     modifier = Modifier
-                        .width(100.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                )
-            } else {
-                Text(
-                    text = "01:00",
-                    fontSize = 16.sp,
-                    modifier = Modifier
-                        .width(100.dp)
-                        .padding(16.dp)
+                        .size(30.dp)
                 )
             }
         },
-        colors = ListItemDefaults.colors(
-            containerColor = background,
-        ),
+        headlineContent = { Text(text = intervalName) },
+        trailingContent = { Text(text = intervalTime) },
     )
 }
 
 @Composable
 fun Intensity(
+    focus: Boolean = true,
     state: AppState,
     onEvent: (AppEvents) -> Unit,
+    viewModel: SyncFitViewModel,
+    intensity: Intensity,
+    intensityChange: (Intensity) -> Unit,
 ) {
-    var lowSelected by remember { mutableStateOf(false) }
-    var highSelected by remember { mutableStateOf(false) }
+    val data by viewModel.state.collectAsState()
+    val validIntensity = data.timerState.isTimerIntensityValid
 
-    Text(text = "Intensity")
+    var selected by remember { mutableStateOf(intensity) }
+
+    val annotatedString = buildAnnotatedString {
+        append("Intensity")
+        if (!validIntensity) {
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.error,
+                )
+            ) {
+                append(" Select Intensity")
+            }
+        }
+    }
+
+    Text(text = annotatedString)
     Spacer(modifier = Modifier.height(Dimensions.Spacing.small))
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -323,37 +518,37 @@ fun Intensity(
     ) {
         OutlinedButton(
             onClick = {
-                lowSelected = true
-                highSelected = false
-                onEvent(TimerEvents.UpdateTimerIntensity(Intensity.LOW))
+                selected = Intensity.LOW
+                intensityChange(selected)
             },
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor =
-                if (lowSelected) {
+                if (selected == Intensity.LOW) {
                     MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
                 } else {
                     Color.Transparent
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Intensity.LOW.name)
         }
         OutlinedButton(
             onClick = {
-                lowSelected = false
-                highSelected = true
-                onEvent(TimerEvents.UpdateTimerIntensity(Intensity.HIGH))
+                selected = Intensity.HIGH
+                intensityChange(selected)
             },
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor =
-                if (highSelected) {
+                if (selected == Intensity.HIGH) {
                     MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
                 } else {
                     Color.Transparent
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Intensity.HIGH.name)
         }
@@ -362,13 +557,31 @@ fun Intensity(
 
 @Composable
 fun Environment(
+    focus: Boolean = true,
     onEvent: (AppEvents) -> Unit,
+    viewModel: SyncFitViewModel,
+    environment: Environment,
+    environmentChange: (Environment) -> Unit,
 ) {
-    var indoorSelected by remember { mutableStateOf(false) }
-    var outdoorSelected by remember { mutableStateOf(false) }
-    var bothSelected by remember { mutableStateOf(false) }
+    val data by viewModel.state.collectAsState()
+    val validEnvironment = data.timerState.isTimerEnvironmentValid
 
-    Text(text = "Environment")
+    var selected by remember { mutableStateOf(environment) }
+
+    val annotatedString = buildAnnotatedString {
+        append("Environment")
+        if (!validEnvironment) {
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.error,
+                )
+            ) {
+                append(" Select Environment")
+            }
+        }
+    }
+
+    Text(text = annotatedString)
     Spacer(modifier = Modifier.height(Dimensions.Spacing.small))
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -376,58 +589,55 @@ fun Environment(
     ) {
         OutlinedButton(
             onClick = {
-                indoorSelected = true
-                outdoorSelected = false
-                bothSelected = false
-                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.INDOOR))
+                selected = Environment.INDOOR
+                environmentChange(selected)
             },
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor =
-                if (indoorSelected) {
+                if (selected == Environment.INDOOR) {
                     MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
                 } else {
                     Color.Transparent
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.INDOOR.name)
         }
         OutlinedButton(
             onClick = {
-                indoorSelected = false
-                outdoorSelected = true
-                bothSelected = false
-                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.OUTDOOR))
+                selected = Environment.OUTDOOR
+                environmentChange(selected)
             },
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor =
-                if (outdoorSelected) {
+                if (selected == Environment.OUTDOOR) {
                     MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
                 } else {
                     Color.Transparent
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.OUTDOOR.name)
         }
         OutlinedButton(
             onClick = {
-                indoorSelected = false
-                outdoorSelected = false
-                bothSelected = true
-                onEvent(TimerEvents.UpdateTimerEnvironment(Environment.BOTH))
+                selected = Environment.BOTH
+                environmentChange(selected)
             },
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor =
-                if (bothSelected) {
+                if (selected == Environment.BOTH) {
                     MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
                 } else {
                     Color.Transparent
                 },
             ),
             modifier = Modifier.weight(1f),
+            enabled = focus,
         ) {
             Text(text = Environment.BOTH.name)
         }
